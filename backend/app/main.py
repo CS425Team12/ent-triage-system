@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import Session, text
 from app.auth.routes import router as auth_routes
 from app.routes.triageCase import router as triage_routes
+from app.routes.email import router as mailer_routes
 from app.routes.user import router as user_routes
 from app.core.database import engine
 from app.core.config import settings
@@ -31,6 +32,7 @@ app.add_middleware(
 
 app.include_router(auth_routes)
 app.include_router(triage_routes)
+app.include_router(mailer_routes)
 app.include_router(user_routes)
 
 @app.get("/")

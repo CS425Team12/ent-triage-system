@@ -17,6 +17,10 @@ class Settings(BaseSettings):
     DB_PORT: str = "5432"
     DB_NAME: str
     
+    RESEND_API_KEY: str
+    TEST_EMAIL_RECIPIENT: str
+    TEST_EMAIL_SENDER: str
+    
     @property
     def SQLALCHEMY_DATABASE_URL(self) -> str:
         return f"postgresql://{self.DB_USER}:{self.DB_PW}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
