@@ -10,7 +10,8 @@ import { TriageCaseProvider } from "./context/TriageCaseContext.jsx";
 import Login from "./pages/Login.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import AdminPortal from "./pages/AdminPortal.jsx";
-import SetPassword from "./pages/SetPassword.jsx"
+import SetPassword from "./pages/SetPassword.jsx";
+import ForgotPassword from "./pages/ForgotPassword.jsx";
 import { ThemeProvider } from "@mui/material/styles";
 import theme from "./theme";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -38,8 +39,12 @@ function App() {
             <Routes>
               <Route path="/" element={<Navigate to="/login" replace />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/forgot-password" element={<SetPassword />} />
-              <Route path="/register" element={<SetPassword />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              {/* 
+                the set-password route will eventually use dynamic routing with generated email tokens for password reset and account registration 
+                using current setup for testing ui
+              */}
+              <Route path="/set-password" element={<SetPassword />} />
               <Route
                 path="/dashboard"
                 element={
