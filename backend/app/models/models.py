@@ -42,6 +42,7 @@ class User(SQLModel, table=True):
     lastLogin: datetime = Field(default_factory=datetime.utcnow)
     lastName: str
     email: str = Field(unique=True)
+    isActive: bool = Field(default=False)
 
 
 

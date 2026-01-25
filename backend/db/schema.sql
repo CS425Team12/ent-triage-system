@@ -17,7 +17,8 @@ CREATE TABLE "User" (
     "passwordHash" TEXT NOT NULL,
     "lastLogin"    DATE,
     "lastName"     TEXT NOT NULL,
-    "email"        TEXT UNIQUE
+    "email"        TEXT UNIQUE,
+    "isActive"    BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE "Patient" (
