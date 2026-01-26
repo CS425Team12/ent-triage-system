@@ -1,4 +1,3 @@
-from fastapi import APIRouter
 import resend
 from app.core.config import settings
 from app.core.security import (EmailTokenType, create_email_token)
@@ -9,8 +8,6 @@ logger = logging.getLogger(__name__)
 resend.api_key = str(settings.RESEND_API_KEY)
 TEST_EMAIL_RECIPIENT = str(settings.TEST_EMAIL_RECIPIENT) # without our own domain, we can only send it to our registered email and from test email for now
 TEST_EMAIL_SENDER = str(settings.TEST_EMAIL_SENDER) 
-
-router = APIRouter(prefix="/mailer", tags=["mailer"])
 
 def send_template_email(from_email: str = TEST_EMAIL_SENDER, to_email: str = TEST_EMAIL_RECIPIENT, template_name: str = "", link: str = "") -> bool:
     try:
@@ -24,7 +21,7 @@ def send_template_email(from_email: str = TEST_EMAIL_SENDER, to_email: str = TES
           },
         },
       }
-      email: resend.Emails.SendResponse = resend.Emails.send(params)
+      resend.Emails.SendResponse = resend.Emails.send(params)
       logger.info(f"Email '{template_name}' sent successfully to {to_email}")
       return True
     except Exception as e:
