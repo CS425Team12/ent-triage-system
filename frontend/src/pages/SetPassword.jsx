@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { Box, Card, CardContent, Typography, Button } from "@mui/material";
 import PasswordForm from "../components/account/PasswordForm";
-// import api from "../api";
+import apiClient from "../api/axios";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import React, { useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -15,10 +15,10 @@ export default function SetPassword() {
 
   const handleSubmit = async (values, { setSubmitting }) => {
     try {
-      // await api.post("/auth/register", {
-      //   token,
-      //   password: values.password,
-      // });
+      await apiClient.post("/auth/set-password", {
+        token,
+        new_password: values.password,
+      });
 
       console.log("Password set:", values.password);
 

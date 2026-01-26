@@ -1,6 +1,6 @@
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
+from jose import jwt, JWTError, ExpiredSignatureError
 from app.core.config import settings
 from app.models import User
 from app.core.dependencies import get_db
@@ -45,7 +45,7 @@ def verify_email_token(token: str, expected_type: EmailTokenType):
         if payload_type != expected_type.value:
             raise HTTPException(status_code=401, detail="Invalid token type")
         return payload
-    except jwt.ExpiredSignatureError:
+    except ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
+    except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
