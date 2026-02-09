@@ -240,6 +240,8 @@ def review_case(
     case.reviewReason = update.reviewReason
     case.reviewedBy = current_user.userID
     case.reviewTimestamp = datetime.now()
+    if update.scheduledDate:
+        case.scheduledDate = update.scheduledDate
 
     db.add(case)
     db.commit()

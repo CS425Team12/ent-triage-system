@@ -52,6 +52,7 @@ export const EditCaseButtonCellRenderer = (params) => {
       if (isReviewing) {
         await reviewCase(caseData.caseID, {
           reviewReason: updatedData.reviewReason,
+          scheduledDate: updatedData.scheduledDate || null,
         });
       } else {
         await updateCase(caseData.caseID, updatedData);

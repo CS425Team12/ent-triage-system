@@ -168,11 +168,7 @@ export default function CaseDetailsDialog({ open, onClose, caseData, onSave }) {
               </Typography>
               <Box>
                 <Box mb={2}>
-                  <Box
-                    display="flex"
-                    flexDirection="row"
-                    alignItems="center"
-                  >
+                  <Box display="flex" flexDirection="row" alignItems="center">
                     <Typography
                       variant="subtitle2"
                       color="textSecondary"
@@ -250,7 +246,13 @@ export default function CaseDetailsDialog({ open, onClose, caseData, onSave }) {
                     formik={formik}
                     fieldName="reviewedByEmail"
                     label="Reviewed By"
-                  />{" "}
+                  />
+                  <RenderTextField
+                    editMode={false}
+                    formik={formik}
+                    fieldName="scheduledDate"
+                    label="Scheduled Date"
+                  />
                 </Box>
               )}
             </Box>
@@ -294,6 +296,7 @@ export default function CaseDetailsDialog({ open, onClose, caseData, onSave }) {
         onReview={(data) => {
           onSave({
             reviewReason: data.reviewReason,
+            scheduledDate: data.scheduledDate || null,
             caseID: caseData.caseID,
           });
           setReviewMode(false);

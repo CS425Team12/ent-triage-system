@@ -44,6 +44,7 @@ CREATE TABLE "TriageCase" (
     "reviewReason"        TEXT,
     "reviewTimestamp"     TIMESTAMPTZ,
     "reviewedBy"          UUID,
+    "scheduledDate"       TIMESTAMPTZ,
     "overrideSummary"     TEXT,
     "overrideSummaryBy"   UUID,
     "AIUrgency"           urgency_level_enum,

@@ -14,13 +14,18 @@ import {
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { useAuth } from "../../context/AuthContext";
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import dayjs from "dayjs";
+
 export default function ReviewCaseDialog({ open, onClose, onReview }) {
   const { user } = useAuth();
   const [submitting, setSubmitting] = React.useState(false);
   const formik = useFormik({
+    validateOnMount: true,
     enableReinitialize: true,
     initialValues: {
       reviewReason: "",
+      scheduledDate: "",
       reviewedBy: user.email,
     },
     validationSchema: Yup.object({
@@ -28,9 +33,13 @@ export default function ReviewCaseDialog({ open, onClose, onReview }) {
     }),
     onSubmit: async (values) => {
       setSubmitting(true);
-      await onReview({
-        reviewReason: values.reviewReason, // api will autofill reviewedBy field
-      });
+      const payload = {
+        reviewReason: values.reviewReason,
+      };
+      if (values.scheduledDate) {
+        payload.scheduledDate = new Date(values.scheduledDate).toISOString();
+      }
+      await onReview(payload);
       setSubmitting(false);
       formik.resetForm();
       console.log("Review Details: ", values);
@@ -58,19 +67,38 @@ export default function ReviewCaseDialog({ open, onClose, onReview }) {
               multiline
               rows={4}
               name="reviewReason"
-              label="Review Reason"
+              label="Review Reason *"
               placeholder="Describe the review..."
               value={formik.values.reviewReason}
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
               error={Boolean(
-                formik.touched.reviewReason &&
-                  formik.errors.reviewReason
+                formik.touched.reviewReason && formik.errors.reviewReason,
               )}
               helperText={
-                formik.touched.reviewReason &&
-                formik.errors.reviewReason
+                formik.touched.reviewReason && formik.errors.reviewReason
               }
+            />
+            <DateTimePicker
+              label="Scheduled Follow-up"
+              value={
+                formik.values.scheduledDate
+                  ? dayjs(formik.values.scheduledDate)
+                  : null
+              }
+              onChange={(newValue) => {
+                formik.setFieldValue(
+                  "scheduledDate",
+                  newValue ? newValue.toISOString() : null,
+                );
+              }}
+              slotProps={{
+                textField: {
+                  fullWidth: true,
+                  name: "scheduledDate",
+                  onBlur: formik.handleBlur,
+                },
+              }}
             />
             <Box>
               <Typography
@@ -88,7 +116,11 @@ export default function ReviewCaseDialog({ open, onClose, onReview }) {
         </form>
       </DialogContent>
       <DialogActions sx={{ p: 2, gap: 1 }}>
-        <Button disabled={submitting} onClick={formik.handleSubmit} variant="contained">
+        <Button
+          disabled={submitting || !formik.isValid}
+          onClick={formik.handleSubmit}
+          variant="contained"
+        >
           Review
         </Button>
         <Button onClick={handleClose}>Cancel</Button>

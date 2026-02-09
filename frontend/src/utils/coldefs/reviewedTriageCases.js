@@ -29,6 +29,14 @@ export const reviewedColDefs = [
     }
   },
   {
+    headerName: 'Scheduled Date',
+    field: 'scheduledDate',
+    flex: 0.75,
+    minWidth: 200,
+    valueFormatter: dateTimeFormatter,
+    filter: 'agDateColumnFilter',
+  },
+  {
     headerName: 'Review Reason',
     flex: 6,
     minWidth: 300,
@@ -45,7 +53,7 @@ export const reviewedColDefs = [
     minWidth: 200,
     filter: 'agTextColumnFilter',
   },
-    {
+  {
     headerName: 'Reviewed At',
     field: 'reviewTimestamp',
     flex: 0.75,
