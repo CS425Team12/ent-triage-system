@@ -220,7 +220,7 @@ export default function CaseDetailsDialog({ open, onClose, caseData, onSave }) {
                   editMode={editMode}
                   formik={formik}
                   fieldName="overrideSummary"
-                  label={`Override Summary (by ${caseData.overrideSummaryByEmail || "N/A"})`}
+                  label={`Override Summary ${caseData.overrideSummaryByEmail ? `(Last Updated By: ${caseData.overrideSummaryByEmail})` : ""}`}
                 />
               ) : (
                 <Button onClick={() => setEditMode(true)}>
