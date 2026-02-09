@@ -40,6 +40,7 @@ export default function CaseDetailsDialog({ open, onClose, caseData, onSave }) {
   }, [caseData]);
 
   const formik = useFormik({
+    validateOnMount: true,
     enableReinitialize: true,
     initialValues: {
       firstName: formData.firstName || "",
@@ -118,19 +119,19 @@ export default function CaseDetailsDialog({ open, onClose, caseData, onSave }) {
                   editMode={editMode}
                   formik={formik}
                   fieldName="firstName"
-                  label="First Name"
+                  label="First Name *"
                 />
                 <RenderTextField
                   editMode={editMode}
                   formik={formik}
                   fieldName="lastName"
-                  label="Last Name"
+                  label="Last Name *"
                 />
                 <RenderTextField
                   editMode={editMode}
                   formik={formik}
                   fieldName="DOB"
-                  label="Date of Birth"
+                  label="Date of Birth *"
                   type="date"
                 />
                 <RenderTextField
@@ -262,7 +263,7 @@ export default function CaseDetailsDialog({ open, onClose, caseData, onSave }) {
           {editMode ? (
             <>
               <Button
-                disabled={submitting}
+                disabled={submitting || !formik.isValid}
                 onClick={formik.handleSubmit}
                 variant="contained"
               >
