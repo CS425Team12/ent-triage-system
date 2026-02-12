@@ -92,24 +92,61 @@ CREATE TABLE "AIInference" (
 
 CREATE TABLE "AuditLog" (
     "logID"         UUID PRIMARY KEY,
-    "userID"        UUID NOT NULL,
-    "caseID"        UUID,
+    "actorID"        UUID,
+    "actorType"      TEXT,
+    "resourceID"        UUID,
+    "resourceType"      TEXT,
+    "action"            TEXT,
+    "status"            TEXT,
     "timestamp"     TIMESTAMPTZ DEFAULT NOW(),
     "changeDetails" JSONB,
-    "locked"        BOOLEAN DEFAULT FALSE,
+    "ipAddress"    INET,
     "hash"          TEXT,
     "previousHash"  TEXT,
     CONSTRAINT fk_audit_user
-        FOREIGN KEY ("userID") REFERENCES "User"("userID"),
-    CONSTRAINT fk_audit_case
-        FOREIGN KEY ("caseID") REFERENCES "TriageCase"("caseID")
+        FOREIGN KEY ("actorID") REFERENCES "User"("userID")
 );
 
 CREATE INDEX idx_triage_patient   ON "TriageCase"("patientID");
 CREATE INDEX idx_transcript_case  ON "Transcript"("caseID");
 CREATE INDEX idx_aiinference_case ON "AIInference"("caseID");
-CREATE INDEX idx_audit_case       ON "AuditLog"("caseID");
+CREATE INDEX idx_audit_resource       ON "AuditLog"("resourceID");
 
 ALTER TYPE urgency_level_enum RENAME VALUE 'low' TO 'routine';
 ALTER TYPE urgency_level_enum RENAME VALUE 'medium' TO 'semi-urgent';
 ALTER TYPE urgency_level_enum RENAME VALUE 'high' TO 'urgent';
+
+CREATE OR REPLACE FUNCTION ent.validate_audit_resource()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.resourceType IS NULL OR NEW.resourceID IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  IF upper(NEW.resourceType) = 'USER' THEN
+    IF NOT EXISTS (SELECT 1 FROM "User" WHERE "userID" = NEW.resourceID) THEN
+      RAISE EXCEPTION 'AuditLog validation failed: resourceType USER but resourceID not found: %', NEW.resourceID;
+    END IF;
+  ELSIF upper(NEW.resourceType) = 'PATIENT' THEN
+    IF NOT EXISTS (SELECT 1 FROM "Patient" WHERE "patientID" = NEW.resourceID) THEN
+      RAISE EXCEPTION 'AuditLog validation failed: resourceType PATIENT but resourceID not found: %', NEW.resourceID;
+    END IF;
+  ELSIF upper(NEW.resourceType) = 'TRIAGE_CASE' THEN
+    IF NOT EXISTS (SELECT 1 FROM "TriageCase" WHERE "caseID" = NEW.resourceID) THEN
+      RAISE EXCEPTION 'AuditLog validation failed: resourceType TRIAGE_CASE but resourceID not found: %', NEW.resourceID;
+    END IF;
+  ELSE
+    RAISE EXCEPTION 'AuditLog validation failed: unknown resourceType: %', NEW.resourceType;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER trg_validate_audit_resource
+BEFORE INSERT OR UPDATE ON "AuditLog"
+FOR EACH ROW
+EXECUTE FUNCTION ent.validate_audit_resource();
+
+CREATE INDEX IF NOT EXISTS idx_audit_resource ON "AuditLog"(resourceType, resourceID);
+CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON "AuditLog"(timestamp);

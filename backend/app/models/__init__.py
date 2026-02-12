@@ -12,3 +12,9 @@ from .models import (
   TriageCasePublic,
   TriageCasesPublic,
 )
+from .auditLog import (
+  AuditLog,
+  AuditLogPublic,
+  AuditLogsPublic,
+  AuditLogBase,
+)
