@@ -2,13 +2,12 @@ import {
   UrgencyCellRenderer,
   urgencyComparator,
   dateTimeFormatter,
-  ageValueGetter,
   EditCaseButtonCellRenderer,
   concatNameValueGetter,
   UrgencyChangeCellRenderer,
 } from '../gridUtils';
 
-export const unreviewedColDefs = [
+export const unreviewedColDefs = (onCaseUpdated) => [
   {
     headerName: 'Change',
     colId: "change",
@@ -38,15 +37,7 @@ export const unreviewedColDefs = [
     filter: 'agTextColumnFilter',
     valueGetter: (params) => {
       return concatNameValueGetter(params.data.firstName, params.data.lastName);
-    }
-  },
-  {
-    headerName: 'Age',
-    field: 'DOB',
-    flex: 0.5,
-    minWidth: 100,
-    filter: 'agNumberColumnFilter',
-    valueGetter: (params) => ageValueGetter(params.data?.DOB),
+    },
   },
   {
     headerName: 'Date Created',
@@ -66,7 +57,7 @@ export const unreviewedColDefs = [
     filter: 'agTextColumnFilter',
     valueGetter: (params) => {
       return params.data.overrideSummary || params.data.AISummary;
-    }
+    },
   },
   {
     headerName: 'Edit',
@@ -74,5 +65,6 @@ export const unreviewedColDefs = [
     minWidth: 100,
     cellRenderer: EditCaseButtonCellRenderer,
     sortable: false,
+    cellRendererParams: { onCaseUpdated },
   },
 ];

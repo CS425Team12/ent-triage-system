@@ -23,7 +23,7 @@ import {
   RETURNING_PATIENT_OPTIONS,
   STATUS_VALUES,
 } from "../../utils/consts";
-import { getChangedFields } from "../../utils/utils"
+import { getChangedFields } from "../../utils/utils";
 import dayjs from "dayjs";
 import { UrgencyChangeIndicator } from "../UrgencyChangeIndicator";
 
@@ -44,15 +44,16 @@ export default function CaseDetailsDialog({ open, onClose, caseData, onSave }) {
     validateOnMount: true,
     enableReinitialize: true,
     initialValues: {
+      // Patient fields
       firstName: formData.firstName || "",
       lastName: formData.lastName || "",
       DOB: formData.DOB || "",
       contactInfo: formData.contactInfo || "",
       returningPatient: formData.returningPatient ?? false,
+      insuranceInfo: formData.insuranceInfo || "Not Provided",
       overrideUrgency: formData.overrideUrgency
         ? formData.overrideUrgency
         : formData.AIUrgency || "",
-      insuranceInfo: formData.insuranceInfo || "Not Provided",
       overrideSummary: formData.overrideSummary || "",
       clinicianNotes: formData.clinicianNotes || "",
       reviewReason: formData.reviewReason || "",
@@ -60,13 +61,13 @@ export default function CaseDetailsDialog({ open, onClose, caseData, onSave }) {
       scheduledDate: formData.scheduledDate || "",
     },
     validationSchema: Yup.object({
-      firstName: Yup.string().required("Name is required"),
-      lastName: Yup.string().required("Name is required"),
+      firstName: Yup.string().required("First name is required"),
+      lastName: Yup.string().required("Last name is required"),
       DOB: Yup.string().required("DOB is required"),
       contactInfo: Yup.string(),
       insuranceInfo: Yup.string(),
       overrideSummary: Yup.string(),
-      clinicNotes: Yup.string(),
+      clinicianNotes: Yup.string(),
       overrideUrgency: Yup.string().required("Case urgency is required"),
       reviewReason: Yup.string().when("status", {
         is: STATUS_VALUES.REVIEWED,
@@ -100,9 +101,6 @@ export default function CaseDetailsDialog({ open, onClose, caseData, onSave }) {
     onClose();
   };
 
-  // Fields: Patient Name, DOB, Contact Info, Insurance Info, AiSummary, Override Summary, Clinician Notes
-  // Dropdowns: Urgency Level, Returning Patient (Yes/No)
-
   return (
     <>
       <Dialog open={open} onClose={handleClose} maxWidth="lg" fullWidth>
@@ -113,7 +111,7 @@ export default function CaseDetailsDialog({ open, onClose, caseData, onSave }) {
         <DialogContent>
           <Grid container spacing={4}>
             <Grid>
-              {/* Left side content */}
+              {/* Left side content - Patient Information */}
               <Typography variant="h8" sx={{ fontWeight: 600 }}>
                 Patient Information
               </Typography>

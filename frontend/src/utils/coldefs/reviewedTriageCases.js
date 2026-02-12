@@ -6,7 +6,7 @@ import {
   concatNameValueGetter,
 } from '../gridUtils';
 
-export const reviewedColDefs = [
+export const reviewedColDefs = (onCaseUpdated) => [
   {
     headerName: 'Urgency',
     flex: 1, // flex determines the proportion the column will take up
@@ -26,7 +26,7 @@ export const reviewedColDefs = [
     filter: 'agTextColumnFilter',
     valueGetter: (params) => {
       return concatNameValueGetter(params.data.firstName, params.data.lastName);
-    }
+    },
   },
   {
     headerName: 'Scheduled Date',
@@ -68,5 +68,6 @@ export const reviewedColDefs = [
     minWidth: 100,
     cellRenderer: EditCaseButtonCellRenderer,
     sortable: false,
+    cellRendererParams: { onCaseUpdated },
   },
 ];

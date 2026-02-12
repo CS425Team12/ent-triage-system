@@ -2,46 +2,42 @@ import React from "react";
 import { Grid, Typography, Box, Paper, Stack, Tabs, Tab } from "@mui/material";
 import { Assessment } from "@mui/icons-material";
 import SearchableDataGrid from "../components/grid/SearchableDataGrid";
-import mockData from "../../mockData/triageCaseMockData.json";
 import { unreviewedColDefs } from "../utils/coldefs/unreviewedTriageCases";
 import { reviewedColDefs } from "../utils/coldefs/reviewedTriageCases";
 import Navbar from "../components/Navbar";
 import { useTriageCases } from "../context/TriageCaseContext";
+import { STATUS_VALUES } from "../utils/consts";
 
 export default function Dashboard() {
-  const { cases, fetchCases, getUnreviewedCases, getReviewedCases } =
-    useTriageCases();
+  const { fetchCases } = useTriageCases();
+  const [cases, setCases] = React.useState([]);
   const [activeTab, setActiveTab] = React.useState(0);
-  const [loading, setLoading] = React.useState(false);
+  const [loading, setLoading] = React.useState(true);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
   };
 
   React.useEffect(() => {
-    const getCases = async () => {
-      console.log("Fetching cases");
-      setLoading(true);
-      try {
-        await fetchCases();
-      } catch (err) {
-        console.error("Failed to fetch cases", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    if (cases.length === 0) {
-      getCases();
-    }
-  }, [fetchCases]);
+    getCases();
+  }, []);
 
-  const unreviewedCases = React.useMemo(() => {
-    return getUnreviewedCases();
-  }, [getUnreviewedCases]);
+  const getCases = async () => {
+    console.log("hi")
+    const results = await fetchCases();
+    setCases(results);
+    setLoading(false);
+  };
 
-  const reviewedCases = React.useMemo(() => {
-    return getReviewedCases();
-  }, [getReviewedCases]);
+  const unreviewedCases =   React.useMemo(() => {
+    if (!cases || cases.length === 0) return [];
+    return cases.filter((c) => c.status !== STATUS_VALUES.REVIEWED);
+  }, [cases]);
+
+  const reviewedCases =   React.useMemo(() => {
+    if (!cases || cases.length === 0) return [];
+    return cases.filter((c) => c.status === STATUS_VALUES.REVIEWED);
+  }, [cases]);
 
   return (
     <>
@@ -100,14 +96,14 @@ export default function Dashboard() {
                 {activeTab === 0 && (
                   <SearchableDataGrid
                     rowData={unreviewedCases || []}
-                    columnDefs={unreviewedColDefs}
+                    columnDefs={unreviewedColDefs(getCases)}
                     loading={loading}
                   />
                 )}
                 {activeTab === 1 && (
                   <SearchableDataGrid
                     rowData={reviewedCases || []}
-                    columnDefs={reviewedColDefs}
+                    columnDefs={reviewedColDefs(getCases)}
                     loading={loading}
                   />
                 )}

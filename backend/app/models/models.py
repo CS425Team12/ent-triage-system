@@ -43,10 +43,6 @@ class User(SQLModel, table=True):
     lastName: str
     email: str = Field(unique=True)
 
-
-
-
-
 class Message(SQLModel):
     message: str
 
@@ -79,6 +75,21 @@ class PatientUpdate(SQLModel):
     returningPatient: Optional[bool] = None
     languagePreference: Optional[str] = None
     verified: Optional[bool] = None
+
+class PatientPublic(PatientBase):
+    patientID: uuid.UUID
+
+class PatientChangelog(SQLModel, table=True):
+    __tablename__ = "PatientChangelog"
+    __table_args__ = {"schema": "ent"}
+    
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    patientID: uuid.UUID = Field(foreign_key="ent.Patient.patientID")
+    changedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    changedBy: uuid.UUID = Field(foreign_key="ent.User.userID")
+    fieldName: str = Field(max_length=100)
+    oldValue: Optional[str] = None
+    newValue: Optional[str] = None
 
 # ============= TRIAGE CASE MODELS =============
 class TriageCaseBase(SQLModel):
@@ -152,3 +163,15 @@ class TriageCasePublic(TriageCaseBase, PatientBase):
 class TriageCasesPublic(SQLModel):
     cases: list[TriageCasePublic] 
     count: int
+
+class TriageCaseChangelog(SQLModel, table=True):
+    __tablename__ = "TriageCaseChangelog"
+    __table_args__ = {"schema": "ent"}
+    
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    caseID: uuid.UUID = Field(foreign_key="ent.TriageCase.caseID")
+    changedAt: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    changedBy: uuid.UUID = Field(foreign_key="ent.User.userID")
+    fieldName: str = Field(max_length=100)
+    oldValue: Optional[str] = None
+    newValue: Optional[str] = None
