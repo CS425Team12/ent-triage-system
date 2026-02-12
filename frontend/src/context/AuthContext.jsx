@@ -46,7 +46,7 @@ export function AuthProvider({ children }) {
 
   // Logout
   const logout = async () => {
-    await apiClient.post("/auth/logout");
+    await apiClient.post("/auth/logout", {email : user.email});
     authService.logout();
     setUser(null);
   };

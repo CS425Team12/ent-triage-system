@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from app.core.security import (verify_password, create_access_token, create_refresh_token)
-from app.auth.schemas import LoginRequest, UserResponse, Token
+from app.auth.schemas import LoginRequest, UserResponse, Token, LogoutRequest
 from app.auth.dependencies import get_current_user
 from app.models import User
 from app.core.dependencies import get_db
@@ -9,16 +9,39 @@ from datetime import timedelta
 from app.core.redis import redis_client as redis
 from app.core.config import settings
 from jose import jwt
+import logging
+from uuid import UUID
+
+from app.core.audit import AuditService
+from app.core.audit_middleware import get_audit_meta
+logger = logging.getLogger(__name__)
+
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 REFRESH_COOKIE_NAME = "refresh_token"
 
 # Login route
 @router.post("/login", response_model=Token)
-def login(response: Response, data: LoginRequest, db: Session = Depends(get_db)):
+def login(response: Response, data: LoginRequest, db: Session = Depends(get_db), request: Request = None):
     user = db.exec(select(User).where(User.email == data.email)).first()
 
     if not user or not verify_password(data.password, user.passwordHash):
+        # Log failed login attempt (no PHI/details)
+        try:
+            audit_meta = get_audit_meta(request) if request is not None else {"ip": None}
+            AuditService.create_log(
+                db,
+                action="LOGIN_FAILURE",
+                status="FAIL",
+                actor_id=None,
+                actor_type=None,
+                resource_type="USER",
+                resource_id=user.userID if user else None,
+                fields_modified=None,
+                ip=audit_meta.get("ip"),
+            )
+        except Exception:
+            logger.exception("Failed to write audit log for login failure")
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     access_token = create_access_token({"sub": str(user.userID), "role": user.role})
@@ -32,6 +55,22 @@ def login(response: Response, data: LoginRequest, db: Session = Depends(get_db))
         secure=settings.COOKIE_SECURE, 
         samesite="none"
     )
+    # Log successful login
+    try:
+        audit_meta = get_audit_meta(request) if request is not None else {"ip": None}
+        AuditService.create_log(
+            db,
+            action="LOGIN_SUCCESS",
+            status="SUCCESS",
+            actor_id=user.userID,
+            actor_type=user.role,
+            resource_type="USER",
+            resource_id=user.userID,
+            fields_modified=None,
+            ip=audit_meta.get("ip"),
+        )
+    except Exception:
+        logger.exception("Failed to write audit log for login success")
     return Token(access_token=access_token)
 
 # Validate refresh token and return new access token
@@ -56,18 +95,39 @@ def refresh(request: Request):
 
 # Log user out and delete refresh token from redis and cookies
 @router.post("/logout")
-def logout(response: Response, request: Request):
+def logout(response: Response, data: LogoutRequest, db: Session = Depends(get_db), request: Request = None):
     refresh_token = request.cookies.get(REFRESH_COOKIE_NAME)
+    user = db.exec(select(User).where(User.email == data.email)).first()
+    user_id = user.userID if user else None
     if refresh_token:
-        payload = jwt.decode(
-            refresh_token, 
-            settings.REFRESH_SECRET_KEY,
-            algorithms=[settings.JWT_ALGORITHM]
-        )
-        user_id = payload.get("sub")
-        if user_id:
-            redis.delete(f"refresh_token:{user_id}")
+        try:
+            payload = jwt.decode(
+                refresh_token, 
+                settings.REFRESH_SECRET_KEY,
+                algorithms=[settings.JWT_ALGORITHM]
+            )
+            user_id = payload.get("sub")
+            if user_id:
+                redis.delete(f"refresh_token:{user_id}")
+        except Exception:
+            logger.exception("Failed to decode refresh token during logout")
     response.delete_cookie(REFRESH_COOKIE_NAME)
+    # Log logout
+    try:
+        audit_meta = get_audit_meta(request)
+        AuditService.create_log(
+            db,
+            action="LOGOUT",
+            status="SUCCESS",
+            actor_id=UUID(user_id) if user_id else None,
+            actor_type=None,
+            resource_type="USER",
+            resource_id=UUID(user_id) if user_id else None,
+            fields_modified=None,
+            ip=audit_meta.get("ip"),
+        )
+    except Exception:
+        logger.exception("Failed to write audit log for logout")
     return {"detail": "Logged out successfully"}
 
 # Current user info route

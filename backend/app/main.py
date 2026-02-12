@@ -6,9 +6,11 @@ from sqlmodel import Session, text
 from app.auth.routes import router as auth_routes
 from app.routes.triageCase import router as triage_routes
 from app.routes.user import router as user_routes
+from app.routes.audit import router as audit_routes
 from app.core.database import engine
 from app.core.config import settings
 from app.core.dependencies import get_db
+from app.core.audit_middleware import AuditMetadataMiddleware
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -21,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI()
 
+app.add_middleware(AuditMetadataMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -32,6 +36,7 @@ app.add_middleware(
 app.include_router(auth_routes)
 app.include_router(triage_routes)
 app.include_router(user_routes)
+app.include_router(audit_routes)
 
 @app.get("/")
 def root():
