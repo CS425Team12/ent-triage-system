@@ -272,20 +272,6 @@ export const CaseHistory = ({ caseId, patientId }) => {
           <Typography variant="h8" sx={{ fontWeight: 600 }}>
             Change History
           </Typography>
-          <ToggleButtonGroup
-            value={historyView}
-            exclusive
-            onChange={handleHistoryViewChange}
-            size="small"
-          >
-            <ToggleButton value={HISTORY_VIEWS.COMBINED}>
-              All Changes
-            </ToggleButton>
-            <ToggleButton value={HISTORY_VIEWS.CASE}>Case Only</ToggleButton>
-            <ToggleButton value={HISTORY_VIEWS.PATIENT}>
-              Patient Only
-            </ToggleButton>
-          </ToggleButtonGroup>
         </Stack>
         <Stack direction="row" spacing={2}>
           <DateTimePicker
@@ -317,6 +303,13 @@ export const CaseHistory = ({ caseId, patientId }) => {
             }}
             minDateTime={startDate}
           />
+        </Stack>
+        <Stack
+          direction="row"
+          spacing={2}
+          alignItems="center"
+          justifyContent="flex-end"
+        >
           <Autocomplete
             multiple
             size="small"
@@ -351,20 +344,24 @@ export const CaseHistory = ({ caseId, patientId }) => {
               },
             }}
           />
+          <ToggleButtonGroup
+            value={historyView}
+            exclusive
+            onChange={handleHistoryViewChange}
+            size="small"
+          >
+            <ToggleButton value={HISTORY_VIEWS.COMBINED}>
+              All Changes
+            </ToggleButton>
+            <ToggleButton value={HISTORY_VIEWS.CASE}>Case Only</ToggleButton>
+            <ToggleButton value={HISTORY_VIEWS.PATIENT}>
+              Patient Only
+            </ToggleButton>
+          </ToggleButtonGroup>
           {hasActiveFilters && (
-            <Stack
-              direction="row"
-              spacing={1}
-              alignItems="center"
-              justifyContent="space-between"
-            >
-              <Typography variant="body2" color="text.secondary">
-                Showing {filteredHistory.length} of {history.length} changes
-              </Typography>
-              <Button size="small" variant="outlined" onClick={clearAllFilters}>
-                Clear All Filters
-              </Button>
-            </Stack>
+            <Button onClick={clearAllFilters} size="small" variant="contained">
+              Clear Filters
+            </Button>
           )}
         </Stack>
       </Stack>
