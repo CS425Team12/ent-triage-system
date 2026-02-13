@@ -85,6 +85,17 @@ export const CaseHistory = ({ caseId, patientId }) => {
     }
   };
 
+  const displayValue = (value) => {
+    console.log(value)
+    if (typeof value === "boolean") {
+      return value ? "Yes" : "No";
+    }
+    if (typeof value === "string" && Date.parse(value)) {
+      return dayjs(value).format("h:mm A, MM/DD/YYYY");
+    }
+    return value || "(empty)";
+  }
+
   // for filter options
   const availableUsers = useMemo(() => {
     const users = new Set(history.map((entry) => entry.changedByEmail));
@@ -295,7 +306,7 @@ export const CaseHistory = ({ caseId, patientId }) => {
                           fontFamily: "monospace",
                         }}
                       >
-                        {entry.oldValue || "(empty)"}
+                        {displayValue(entry.oldValue)}
                       </Typography>
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -311,7 +322,7 @@ export const CaseHistory = ({ caseId, patientId }) => {
                           fontFamily: "monospace",
                         }}
                       >
-                        {entry.newValue || "(empty)"}
+                        {displayValue(entry.newValue)}
                       </Typography>
                     </Typography>
                   </Stack>
