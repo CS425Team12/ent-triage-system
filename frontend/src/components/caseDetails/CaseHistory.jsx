@@ -56,7 +56,7 @@ export const CaseHistory = ({ caseId, patientId }) => {
 
   // pagination stuff
   const [page, setPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [itemsPerPage, setItemsPerPage] = useState(5);
 
   const { fetchCaseChangelog } = useTriageCases();
   const { fetchPatientChangelog } = usePatients();
@@ -250,19 +250,20 @@ export const CaseHistory = ({ caseId, patientId }) => {
 
   if (loading) {
     return (
-      <Box
+      <Grid
+        container
         display="flex"
         justifyContent="center"
         alignItems="center"
         minHeight={400}
       >
         <CircularProgress />
-      </Box>
+      </Grid>
     );
   }
 
   return (
-    <Box>
+    <Grid container direction="column" spacing={2}>
       <Stack spacing={2}>
         <Stack
           direction="row"
@@ -366,7 +367,13 @@ export const CaseHistory = ({ caseId, patientId }) => {
         </Stack>
       </Stack>
       {paginatedGroups.length === 0 ? (
-        <Box textAlign="center" py={4}>
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          minHeight={200}
+          py={4}
+        >
           <Typography color="text.secondary">
             No change history available
           </Typography>
@@ -503,15 +510,20 @@ export const CaseHistory = ({ caseId, patientId }) => {
               );
             })}
           </Timeline>
-          <Grid container spacing={2} alignItems="center" sx={{ mt: 2 }}>
-            <Grid item xs={12} sm="auto" sx={{ flexGrow: 1 }}>
+          <Grid
+            container
+            spacing={2}
+            justifyContent="flex-end"
+            alignItems="center"
+          >
+            <Grid item>
               <Typography variant="body2" color="text.secondary">
                 Showing {(page - 1) * itemsPerPage + 1}-
                 {Math.min(page * itemsPerPage, groupedHistory.length)} of{" "}
                 {groupedHistory.length}
               </Typography>
             </Grid>
-            <Grid item xs={12} sm="auto">
+            <Grid item>
               <FormControl size="small" sx={{ minWidth: 120 }}>
                 <InputLabel>Per Page</InputLabel>
                 <Select
@@ -526,7 +538,7 @@ export const CaseHistory = ({ caseId, patientId }) => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm="auto">
+            <Grid item>
               <Pagination
                 count={totalPages}
                 page={page}
@@ -539,6 +551,6 @@ export const CaseHistory = ({ caseId, patientId }) => {
           </Grid>
         </>
       )}
-    </Box>
+    </Grid>
   );
 };
