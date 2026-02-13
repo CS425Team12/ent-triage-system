@@ -4,7 +4,6 @@ import {
   dateTimeFormatter,
   EditCaseButtonCellRenderer,
   concatNameValueGetter,
-  UrgencyChangeCellRenderer,
 } from '../gridUtils';
 
 export const unreviewedColDefs = [
@@ -13,7 +12,7 @@ export const unreviewedColDefs = [
     colId: "change",
     filter: false,
     sortable: false,
-    cellRenderer: UrgencyChangeCellRenderer,
+    // cellRenderer: UrgencyChangeCellRenderer,
     flex: 0.25,
     minWidth: 100,
   },

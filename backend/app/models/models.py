@@ -114,8 +114,6 @@ class TriageCase(TriageCaseBase, table=True):
     reviewTimestamp: Optional[datetime] = None
     reviewedBy: Optional[uuid.UUID] = None
     scheduledDate: Optional[datetime] = None
-    overrideSummaryBy: Optional[uuid.UUID] = None
-    overrideUrgencyBy: Optional[uuid.UUID] = None
 
 class TriageCaseCreate(SQLModel):
     patientID: uuid.UUID
@@ -155,10 +153,6 @@ class TriageCasePublic(TriageCaseBase, PatientBase):
     reviewedBy: Optional[uuid.UUID] = None
     reviewedByEmail: Optional[str] = None
     scheduledDate: Optional[datetime] = None
-    overrideSummaryBy: Optional[uuid.UUID] = None
-    overrideSummaryByEmail: Optional[str] = None
-    overrideUrgencyBy: Optional[uuid.UUID] = None
-    overrideUrgencyByEmail: Optional[str] = None
 
 class TriageCasesPublic(SQLModel):
     cases: list[TriageCasePublic] 

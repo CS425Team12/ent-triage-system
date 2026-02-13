@@ -3,18 +3,18 @@ import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { URGENCY_PRIORITY } from '../utils/consts';
 
-export const UrgencyChangeIndicator = ({ initialUrgency, currentUrgency, overrideBy = "", iconSize = 40 }) => {
-  if (!initialUrgency || !currentUrgency || initialUrgency === currentUrgency) {
+export const UrgencyChangeIndicator = ({ prevUrgency, currentUrgency, overrideBy = "", iconSize = 40 }) => {
+  if (!prevUrgency || !currentUrgency || prevUrgency === currentUrgency) {
     return null;
   }
 
-  const increased = URGENCY_PRIORITY[currentUrgency] < URGENCY_PRIORITY[initialUrgency];
+  const increased = URGENCY_PRIORITY[currentUrgency] < URGENCY_PRIORITY[prevUrgency];
   const overrideByDisplay = overrideBy ? ` by ${overrideBy}` : '';
 
   return (
     <Tooltip 
       placement="right"
-      title={`Urgency updated from ${initialUrgency.toUpperCase()} to ${currentUrgency.toUpperCase()}${overrideByDisplay}`}
+      title={`Urgency updated from ${prevUrgency.toUpperCase()} to ${currentUrgency.toUpperCase()}${overrideByDisplay}`}
     >
       <span style={{ display: 'inline-flex', alignItems: 'center'}}>
         {increased ? (

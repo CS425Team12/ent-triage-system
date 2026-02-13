@@ -34,18 +34,6 @@ def build_case_public(case: TriageCase, db: Session) -> TriageCasePublic:
         reviewer = db.get(User, case.reviewedBy)
         if reviewer:
             reviewed_by_email = reviewer.email
-    
-    override_summary_by_email = None
-    if case.overrideSummaryBy:
-        summary_override_user = db.get(User, case.overrideSummaryBy)
-        if summary_override_user:
-            override_summary_by_email = summary_override_user.email
-    
-    override_urgency_by_email = None
-    if case.overrideUrgencyBy:
-        urgency_override_user = db.get(User, case.overrideUrgencyBy)
-        if urgency_override_user:
-            override_urgency_by_email = urgency_override_user.email
             
     return TriageCasePublic(
         **case.model_dump(),
@@ -58,8 +46,6 @@ def build_case_public(case: TriageCase, db: Session) -> TriageCasePublic:
         languagePreference=patient.languagePreference,
         verified=patient.verified,
         reviewedByEmail=reviewed_by_email,
-        overrideSummaryByEmail=override_summary_by_email,
-        overrideUrgencyByEmail=override_urgency_by_email
     )
 
 @router.get("/", response_model=TriageCasesPublic)
@@ -225,12 +211,6 @@ def update_case(
                 record_id=id,
                 user_id=current_user.userID
             )
-            
-            # track which user made overrides
-            if 'overrideUrgency' in case_updates and case_updates['overrideUrgency']:
-                case.overrideUrgencyBy = current_user.userID
-            if 'overrideSummary' in case_updates and case_updates['overrideSummary']:
-                case.overrideSummaryBy = current_user.userID
             
             case.sqlmodel_update(case_updates)
             db.add(case)

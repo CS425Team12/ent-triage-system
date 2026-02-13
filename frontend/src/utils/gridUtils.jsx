@@ -4,7 +4,7 @@ import { Edit } from "@mui/icons-material";
 import dayjs from "dayjs";
 import { URGENCY_PRIORITY, URGENCY_LABELS } from "../utils/consts";
 import { URGENCY_COLORS } from "../theme";
-import CaseDetailsDialog from "../components/caseDetails/CaseDetailsDialog";
+import { CaseDetailsDialog } from "../components/caseDetails/CaseDetailsDialog";
 import EditUserDialog from "../components/admin/EditUserDialog";
 import { useTriageCases } from "../context/TriageCaseContext";
 import { usePatients } from "../context/PatientContext";
@@ -166,18 +166,18 @@ export const EditUserButtonCellRenderer = (params) => {
   );
 };
 
-export const UrgencyChangeCellRenderer = (params) => {
-  const { AIUrgency, overrideUrgency, overrideUrgencyByEmail } = params.data;
-  const currentUrgency = overrideUrgency || AIUrgency;
+// export const UrgencyChangeCellRenderer = (params) => {
+//   const { AIUrgency, overrideUrgency, overrideUrgencyByEmail } = params.data;
+//   const currentUrgency = overrideUrgency || AIUrgency;
 
-  return (
-    <UrgencyChangeIndicator
-      initialUrgency={AIUrgency}
-      currentUrgency={currentUrgency}
-      overrideBy={overrideUrgencyByEmail}
-    />
-  );
-};
+//   return (
+//     <UrgencyChangeIndicator
+//       initialUrgency={AIUrgency}
+//       currentUrgency={currentUrgency}
+//       overrideBy={overrideUrgencyByEmail}
+//     />
+//   );
+// };
 
 export const ageValueGetter = (dob) => {
   if (!dob) return null;
