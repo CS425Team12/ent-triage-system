@@ -23,7 +23,14 @@ import {
 } from "@mui/lab";
 import { useTriageCases } from "../../context/TriageCaseContext";
 import { usePatients } from "../../context/PatientContext";
+import {
+  FIELD_LABELS,
+  URGENCY_LABELS,
+  STATUS_LABELS,
+  RETURNING_PATIENT_OPTIONS,
+} from "../../utils/consts";
 import dayjs from "dayjs";
+import { stringToBool } from "../../utils/utils";
 
 const HISTORY_VIEWS = {
   COMBINED: "combined",
@@ -85,18 +92,32 @@ export const CaseHistory = ({ caseId, patientId }) => {
     }
   };
 
-  const displayValue = (value) => {
-    console.log(value)
-    if (typeof value === "boolean") {
-      return value ? "Yes" : "No";
+  const getDisplayLabel = (fieldName) => {
+    return FIELD_LABELS[fieldName] || fieldName;
+  };
+
+  const getDisplayValue = (fieldName, value) => {
+    if (fieldName === "overrideUrgency" || fieldName === "AIUrgency") {
+      return URGENCY_LABELS[value] || value;
     }
+
+    if (fieldName === "status") {
+      return STATUS_LABELS[value] || value;
+    }
+
     if (typeof value === "string" && Date.parse(value)) {
       return dayjs(value).format("h:mm A, MM/DD/YYYY");
     }
-    return value || "(empty)";
-  }
 
-  // for filter options
+    if (fieldName === "returningPatient") {
+      const val = stringToBool(value);
+      const option = RETURNING_PATIENT_OPTIONS.find((o) => o.value === val);
+      return option ? option.label : value;
+    }
+
+    return value || "(empty)";
+  };
+
   const availableUsers = useMemo(() => {
     const users = new Set(history.map((entry) => entry.changedByEmail));
     return Array.from(users).sort();
@@ -104,7 +125,12 @@ export const CaseHistory = ({ caseId, patientId }) => {
 
   const availableFields = useMemo(() => {
     const fields = new Set(history.map((entry) => entry.fieldName));
-    return Array.from(fields).sort();
+    return Array.from(fields)
+      .map((fieldName) => ({
+        value: fieldName,
+        label: getDisplayLabel(fieldName),
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label));
   }, [history]);
 
   const filteredHistory = useMemo(() => {
@@ -193,9 +219,13 @@ export const CaseHistory = ({ caseId, patientId }) => {
           <Autocomplete
             multiple
             size="small"
-            options={availableFields}
+            options={availableFields.map((f) => f.value)}
             value={selectedFields}
             onChange={(event, newValue) => setSelectedFields(newValue)}
+            getOptionLabel={(option) => {
+              const field = availableFields.find((f) => f.value === option);
+              return field ? field.label : option;
+            }}
             renderInput={(params) => <TextField {...params} label="Field" />}
             slotProps={{
               popper: {
@@ -280,49 +310,44 @@ export const CaseHistory = ({ caseId, patientId }) => {
                     <Typography variant="body2" color="text.secondary">
                       Field:{" "}
                       <Typography
-                        component="code"
                         variant="body2"
                         sx={{
                           bgcolor: "grey.100",
                           px: 0.75,
                           py: 0.25,
                           borderRadius: 0.5,
-                          fontFamily: "monospace",
+                          fontWeight: 600,
                         }}
                       >
-                        {entry.fieldName}
+                        {getDisplayLabel(entry.fieldName)}
                       </Typography>
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Before:{" "}
                       <Typography
-                        component="code"
                         variant="body2"
                         sx={{
                           bgcolor: "grey.100",
                           px: 0.75,
                           py: 0.25,
                           borderRadius: 0.5,
-                          fontFamily: "monospace",
                         }}
                       >
-                        {displayValue(entry.oldValue)}
+                        {getDisplayValue(entry.fieldName, entry.oldValue)}
                       </Typography>
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       After:{" "}
                       <Typography
-                        component="code"
                         variant="body2"
                         sx={{
                           bgcolor: "grey.100",
                           px: 0.75,
                           py: 0.25,
                           borderRadius: 0.5,
-                          fontFamily: "monospace",
                         }}
                       >
-                        {displayValue(entry.newValue)}
+                        {getDisplayValue(entry.fieldName, entry.newValue)}
                       </Typography>
                     </Typography>
                   </Stack>

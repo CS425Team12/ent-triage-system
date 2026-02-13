@@ -8,6 +8,7 @@ import {
   URGENCY_LABELS,
   RETURNING_PATIENT_OPTIONS,
   STATUS_VALUES,
+  FIELD_LABELS,
 } from "../../utils/consts";
 import dayjs from "dayjs";
 
@@ -28,51 +29,44 @@ export const CaseDetailsForm = ({
             editMode={editMode}
             formik={formik}
             fieldName="firstName"
-            label="First Name *"
+            label={`${FIELD_LABELS.firstName}`}
           />
           <RenderTextField
             editMode={editMode}
             formik={formik}
             fieldName="lastName"
-            label="Last Name *"
+            label={`${FIELD_LABELS.lastName}`}
           />
           <RenderTextField
             editMode={editMode}
             formik={formik}
             fieldName="DOB"
-            label="Date of Birth *"
+            label={`${FIELD_LABELS.DOB}`}
             type="date"
           />
           <RenderTextField
             editMode={editMode}
             formik={formik}
             fieldName="contactInfo"
-            label="Contact Information"
+            label={FIELD_LABELS.contactInfo}
           />
           <RenderTextField
             editMode={editMode}
             formik={formik}
             fieldName="insuranceInfo"
-            label="Insurance Info"
+            label={FIELD_LABELS.insuranceInfo}
           />
           <RenderSelectField
             editMode={editMode}
             formik={formik}
             fieldName="returningPatient"
-            label="Returning Patient"
+            label={FIELD_LABELS.returningPatient}
             options={RETURNING_PATIENT_OPTIONS}
           />
         </Box>
       </Grid>
 
-      <Box
-        sx={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          gap: 2,
-        }}
-      >
+      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
         <Typography variant="h8" sx={{ fontWeight: 600 }}>
           Case Information
         </Typography>
@@ -84,7 +78,7 @@ export const CaseDetailsForm = ({
                 color="textSecondary"
                 sx={{ fontWeight: 500 }}
               >
-                Case Urgency
+                {FIELD_LABELS.overrideUrgency}
               </Typography>
               <UrgencyChangeIndicator
                 prevUrgency={caseData.previousUrgency || caseData.AIUrgency}
@@ -103,35 +97,42 @@ export const CaseDetailsForm = ({
               renderChip
             />
           </Box>
+
           <Box mb={2}>
             <Typography variant="subtitle2" color="textSecondary">
-              Date Created
+              {FIELD_LABELS.dateCreated}
             </Typography>
             <Typography variant="body2">
               {dayjs(caseData.dateCreated).format("h:mm A, MM/DD/YYYY")}
             </Typography>
           </Box>
+
           <Typography variant="subtitle2" color="textSecondary">
-            AI Summary
+            {FIELD_LABELS.AISummary}
           </Typography>
           <Typography variant="body2">{caseData.AISummary || "---"}</Typography>
         </Box>
+
         {editMode || formik.values.overrideSummary ? (
           <RenderTextField
             editMode={editMode}
             formik={formik}
             fieldName="overrideSummary"
-            label={`Override Summary`}
+            label={FIELD_LABELS.overrideSummary}
           />
         ) : (
-          <Button onClick={() => setEditMode(true)}>Override Summary</Button>
+          <Button onClick={() => setEditMode(true)}>
+            {FIELD_LABELS.overrideSummary}
+          </Button>
         )}
+
         <RenderTextField
           editMode={editMode}
           formik={formik}
           fieldName="clinicianNotes"
-          label="Clinician Notes"
+          label={FIELD_LABELS.clinicianNotes}
         />
+
         {caseData?.status === STATUS_VALUES.REVIEWED && (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <Typography variant="h8" sx={{ fontWeight: 600 }}>
@@ -141,17 +142,17 @@ export const CaseDetailsForm = ({
               editMode={false}
               formik={formik}
               fieldName="reviewReason"
-              label="Review Reason"
+              label={FIELD_LABELS.reviewReason}
             />
             <RenderTextField
               editMode={false}
               formik={formik}
               fieldName="reviewedByEmail"
-              label="Reviewed By"
+              label={FIELD_LABELS.reviewedByEmail}
             />
             {editMode ? (
               <DateTimePicker
-                label="Scheduled Date"
+                label={FIELD_LABELS.scheduledDate}
                 value={
                   formik.values.scheduledDate
                     ? dayjs(formik.values.scheduledDate)
@@ -176,7 +177,7 @@ export const CaseDetailsForm = ({
                 editMode={false}
                 formik={formik}
                 fieldName="scheduledDate"
-                label="Scheduled Date"
+                label={FIELD_LABELS.scheduledDate}
                 type="datetime-local"
               />
             )}
@@ -185,4 +186,4 @@ export const CaseDetailsForm = ({
       </Box>
     </Grid>
   );
-}
+};
