@@ -1,25 +1,5 @@
 import { SupervisorAccount, Assessment } from '@mui/icons-material';
 
-export const FIELD_LABELS = {
-  firstName: 'First Name',
-  lastName: 'Last Name',
-  DOB: 'Date of Birth',
-  contactInfo: 'Contact Information',
-  insuranceInfo: 'Insurance Info',
-  returningPatient: 'Returning Patient',
-  overrideUrgency: 'Case Urgency',
-  AIUrgency: 'AI Urgency',
-  overrideSummary: 'Override Summary',
-  AISummary: 'AI Summary',
-  clinicianNotes: 'Clinician Notes',
-  dateCreated: 'Date Created',
-  reviewReason: 'Review Reason',
-  reviewedByEmail: 'Reviewed By',
-  reviewTimestamp: 'Reviewed At',
-  scheduledDate: 'Scheduled Date',
-  status: 'Status',
-};
-
 // this should reflect how these enums are stored in db
 export const URGENCY_VALUES = {
   ROUTINE: "routine",
@@ -29,13 +9,13 @@ export const URGENCY_VALUES = {
 
 // this should reflect how these enums are stored in db
 export const STATUS_VALUES = {
-  UNREVIEWED: "unreviewed",
-  REVIEWED: "reviewed",
+  PENDING: "pending",
+  RESOLVED: "resolved",
 };
 
 export const STATUS_LABELS = {
-  [STATUS_VALUES.UNREVIEWED]: "Unreviewed",
-  [STATUS_VALUES.REVIEWED]: "Reviewed",
+  [STATUS_VALUES.PENDING]: "Pending",
+  [STATUS_VALUES.RESOLVED]: "Resolved",
 };
 
 export const URGENCY_LABELS = {

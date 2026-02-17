@@ -1,60 +1,52 @@
 import { createContext, useContext, useState, useCallback } from "react";
-import { triageCaseService } from "../api/triageCaseService";
-import { STATUS_VALUES } from "../utils/consts";
+import { triageCaseApi } from "../api/triageCaseApi";
 
 const TriageCaseContext = createContext();
 
 export function TriageCaseProvider({ children }) {
-  const [cases, setCases] = useState([]);
+  const [cases, setCases] = useState([]); // update and track local state for now to avoid too many calls to the db
 
   const fetchCases = useCallback(async () => {
-    const data = await triageCaseService.getAllCases();
+    const data = await triageCaseApi.getAllCases();
     const cases = data.cases;
     setCases(cases);
     return cases;
   }, []);
 
-  const getUnreviewedCases = useCallback(() => {
+  const getUnresolvedCases = useCallback(() => {
     if (!cases || cases.length === 0) return [];
-    return cases.filter((c) => c.status !== STATUS_VALUES.REVIEWED);
+    return cases.filter((c) => c.status !== "resolved");
   }, [cases]);
 
-  const getReviewedCases = useCallback(() => {
+  const getResolvedCases = useCallback(() => {
     if (!cases || cases.length === 0) return [];
-    return cases.filter((c) => c.status === STATUS_VALUES.REVIEWED);
+    return cases.filter((c) => c.status === "resolved");
   }, [cases]);
 
   const fetchCaseById = useCallback(async (id) => {
     if (!id) return;
-    const data = await triageCaseService.getCaseById(id);
-    setCases((prev) => prev.map((c) => (c.caseID === id ? data : c)));
-    return data;
+    return await triageCaseApi.getCaseById(id);
   }, []);
 
   const updateCase = useCallback(async (id, updates) => {
     if (!id || !updates || Object.keys(updates).length === 0) return;
-    const updatedCase = await triageCaseService.updateCase(id, updates);
+    const updatedCase = await triageCaseApi.updateCase(id, updates);
     setCases((prev) => prev.map((c) => (c.caseID === id ? updatedCase : c)));
     return updatedCase;
   }, []);
 
-  const reviewCase = useCallback(async (id, updates) => {
+  const resolveCase = useCallback(async (id, updates) => {
     if (!id || !updates || Object.keys(updates).length === 0) return;
-    const updatedCase = await triageCaseService.reviewCase(id, updates);
+    const updatedCase = await triageCaseApi.resolveCase(id, updates);
     setCases((prev) => prev.map((c) => (c.caseID === id ? updatedCase : c)));
     return updatedCase;
   }, []);
 
   const createCase = useCallback(async (caseData) => {
     if (!caseData || Object.keys(caseData).length === 0) return;
-    const newCase = await triageCaseService.createCase(caseData);
+    const newCase = await triageCaseApi.createCase(caseData);
     setCases((prev) => [...prev, newCase]);
     return newCase;
-  }, []);
-
-  const fetchCaseChangelog = useCallback(async (id) => {
-    if (!id) return [];
-    return await triageCaseService.getCaseChangelog(id);
   }, []);
 
   const value = {
@@ -63,10 +55,9 @@ export function TriageCaseProvider({ children }) {
     fetchCaseById,
     updateCase,
     createCase,
-    reviewCase,
-    fetchCaseChangelog,
-    getUnreviewedCases,
-    getReviewedCases,
+    resolveCase,
+    getUnresolvedCases,
+    getResolvedCases,
   };
 
   return (
