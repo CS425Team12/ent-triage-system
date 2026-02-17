@@ -34,7 +34,7 @@ export const UrgencyCellRenderer = (params) => {
 
 export const EditCaseButtonCellRenderer = (params) => {
   const [open, setOpen] = React.useState(false);
-  const { updateCase, reviewCase, fetchCaseById } = useTriageCases();
+  const { updateCase, reviewCase } = useTriageCases();
   const { updatePatient } = usePatients();
   const caseData = params.data;
 
