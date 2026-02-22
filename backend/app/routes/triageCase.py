@@ -290,23 +290,6 @@ def update_case(
             
             patient.sqlmodel_update(patient_updates)
             db.add(patient)
-            try:
-                audit_meta = get_audit_meta(request) if request is not None else {"ip": None}
-                modified_fields = list(patient_updates.keys())
-                AuditService.create_log(
-                    db,
-                    action="UPDATE_PATIENT",
-                    status="SUCCESS",
-                    actor_id=current_user.userID,
-                    actor_type=current_user.role,
-                    resource_type="PATIENT",
-                    resource_id=patient.patientID,
-                    fields_modified=modified_fields,
-                    ip=audit_meta.get("ip"),
-                )
-            except Exception:
-                logger.exception("Failed to write audit log for patient info update")
-        
         
         if case_updates:
             # Log case changes
@@ -322,6 +305,11 @@ def update_case(
             
             case.sqlmodel_update(case_updates)
             db.add(case)
+            
+        db.commit()
+        db.refresh(case)
+
+        if case_updates:
             try:
                 audit_meta = get_audit_meta(request) if request is not None else {"ip": None}
                 modified_fields = list(case_updates.keys())
@@ -337,11 +325,7 @@ def update_case(
                     ip=audit_meta.get("ip"),
                 )
             except Exception:
-                logger.exception("Failed to write audit log for case update")
-    
-        
-        db.commit()
-        db.refresh(case)
+                logger.exception("Failed to write audit log for case update")            
         
         return build_case_public(case, db)
     except HTTPException:

@@ -1,7 +1,7 @@
 import uuid
 import logging
 from typing import Any
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from sqlmodel import Session, select
 from app.core.dependencies import get_db
 from app.auth.dependencies import get_current_user
@@ -13,6 +13,8 @@ from app.models import (
     User,
 )
 from app.utils.changelog import log_changes
+from app.core.audit import AuditService
+from app.core.audit_middleware import get_audit_meta
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/patients", tags=["patients"])
@@ -43,7 +45,8 @@ def update_patient(
     patient_id: uuid.UUID,
     update: PatientUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    request: Request = None
 ) -> Any:
     logger.info(f"PATCH /patients/{patient_id} - user: {current_user.email}, body: {update.model_dump(exclude_unset=True)}")
     
@@ -72,7 +75,22 @@ def update_patient(
         db.add(patient)
         db.commit()
         db.refresh(patient)
-        
+        try:
+            audit_meta = get_audit_meta(request) if request is not None else {"ip": None}
+            modified_fields = list(update_data.keys())
+            AuditService.create_log(
+                db,
+                action="UPDATE_PATIENT",
+                status="SUCCESS",
+                actor_id=current_user.userID,
+                actor_type=current_user.role,
+                resource_type="PATIENT",
+                resource_id=patient.patientID,
+                fields_modified=modified_fields,
+                ip=audit_meta.get("ip"),
+            )
+        except Exception:
+            logger.exception("Failed to write audit log for patient info update")
         return patient
     except HTTPException:
         db.rollback()
