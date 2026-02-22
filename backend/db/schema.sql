@@ -110,6 +110,7 @@ CREATE TABLE "AuditLog" (
     "ipAddress"    INET,
     "hash"          TEXT,
     "previousHash"  TEXT,
+    "locked"        BOOLEAN DEFAULT FALSE,
     CONSTRAINT fk_audit_user
         FOREIGN KEY ("actorID") REFERENCES "User"("userID")
 );
@@ -126,24 +127,27 @@ ALTER TYPE urgency_level_enum RENAME VALUE 'high' TO 'urgent';
 CREATE OR REPLACE FUNCTION ent.validate_audit_resource()
 RETURNS TRIGGER AS $$
 BEGIN
-  IF NEW.resourceType IS NULL OR NEW.resourceID IS NULL THEN
+  IF NEW."resourceType" IS NULL OR NEW."resourceID" IS NULL THEN
+    RETURN NEW;
+  END IF;
+  IF NEW.action IS NOT NULL AND upper(NEW.action) LIKE 'CREATE_%' THEN
     RETURN NEW;
   END IF;
 
-  IF upper(NEW.resourceType) = 'USER' THEN
-    IF NOT EXISTS (SELECT 1 FROM "User" WHERE "userID" = NEW.resourceID) THEN
-      RAISE EXCEPTION 'AuditLog validation failed: resourceType USER but resourceID not found: %', NEW.resourceID;
+  IF upper(NEW."resourceType") = 'USER' THEN
+    IF NOT EXISTS (SELECT 1 FROM ent."User" WHERE "userID" = NEW."resourceID") THEN
+      RAISE EXCEPTION 'AuditLog validation failed: resourceType USER but resourceID not found: %', NEW."resourceID";
     END IF;
-  ELSIF upper(NEW.resourceType) = 'PATIENT' THEN
-    IF NOT EXISTS (SELECT 1 FROM "Patient" WHERE "patientID" = NEW.resourceID) THEN
-      RAISE EXCEPTION 'AuditLog validation failed: resourceType PATIENT but resourceID not found: %', NEW.resourceID;
+  ELSIF upper(NEW."resourceType") = 'PATIENT' THEN
+    IF NOT EXISTS (SELECT 1 FROM ent."Patient" WHERE "patientID" = NEW."resourceID") THEN
+      RAISE EXCEPTION 'AuditLog validation failed: resourceType PATIENT but resourceID not found: %', NEW."resourceID";
     END IF;
-  ELSIF upper(NEW.resourceType) = 'TRIAGE_CASE' THEN
-    IF NOT EXISTS (SELECT 1 FROM "TriageCase" WHERE "caseID" = NEW.resourceID) THEN
-      RAISE EXCEPTION 'AuditLog validation failed: resourceType TRIAGE_CASE but resourceID not found: %', NEW.resourceID;
+  ELSIF upper(NEW."resourceType") = 'TRIAGE_CASE' THEN
+    IF NOT EXISTS (SELECT 1 FROM ent."TriageCase" WHERE "caseID" = NEW."resourceID") THEN
+      RAISE EXCEPTION 'AuditLog validation failed: resourceType TRIAGE_CASE but resourceID not found: %', NEW."resourceID";
     END IF;
   ELSE
-    RAISE EXCEPTION 'AuditLog validation failed: unknown resourceType: %', NEW.resourceType;
+    RAISE EXCEPTION 'AuditLog validation failed: unknown resourceType: %', NEW."resourceType";
   END IF;
 
   RETURN NEW;
@@ -155,5 +159,5 @@ BEFORE INSERT OR UPDATE ON "AuditLog"
 FOR EACH ROW
 EXECUTE FUNCTION ent.validate_audit_resource();
 
-CREATE INDEX IF NOT EXISTS idx_audit_resource ON "AuditLog"(resourceType, resourceID);
+CREATE INDEX IF NOT EXISTS idx_audit_resource ON "AuditLog"("resourceType", "resourceID");
 CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON "AuditLog"(timestamp);

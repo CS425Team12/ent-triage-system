@@ -67,6 +67,7 @@ class AuditService:
         actor_type: Optional[str] = None,
         resource_type: Optional[str] = None,
         resource_id: Optional[UUID] = None,
+        changeDetails: Optional[dict] = None,
         fields_modified: Optional[list[str]] = None,
         ip: Optional[str] = None,
     ) -> AuditLog:
@@ -83,13 +84,13 @@ class AuditService:
             ip: IP address of the request origin
         """
         # Build changeDetails JSONB
-        change_details = None
-        if fields_modified:
+        if fields_modified and changeDetails is None:
             change_details = {
                 "fields_modified": fields_modified,
                 "modified_field_count": len(fields_modified),
             }
-
+        else:
+            change_details = changeDetails
         # Get current timestamp
         timestamp = datetime.now(timezone.utc)
 
