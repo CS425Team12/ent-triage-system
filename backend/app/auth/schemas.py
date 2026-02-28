@@ -8,6 +8,9 @@ class LoginRequest(SQLModel):
     email: str
     password: str
 
+class LogoutRequest(SQLModel):
+    email: str
+
 class UserResponse(SQLModel):
     userID: str
     email: str

@@ -2,7 +2,7 @@ import uuid
 import logging
 from typing import Any
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from sqlmodel import Session, func, select
 from app.core.dependencies import get_db
 from app.auth.dependencies import get_current_user
@@ -20,6 +20,9 @@ from app.models import (
     Patient,
 )
 from app.utils.changelog import log_changes
+from app.core.audit_middleware import get_audit_meta
+from app.core.audit import AuditService
+
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/triage-cases", tags=["triage-cases"])
@@ -67,7 +70,8 @@ def build_case_public(case: TriageCase, db: Session) -> TriageCasePublic:
 def get_all_cases(
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    request: Request = None
 ) -> Any:
     logger.info(f"GET /triage-cases/ - limit: {limit}, user: {current_user.email}")
     
@@ -79,7 +83,24 @@ def get_all_cases(
         cases = db.exec(statement).all()
         
         cases_public = [build_case_public(case, db) for case in cases]
-
+    
+        try:
+            audit_meta = get_audit_meta(request) if request is not None else {"ip": None}
+            AuditService.create_log(
+                db,
+                action="LIST_CASES",
+                status="SUCCESS",
+                actor_id=current_user.userID,
+                actor_type=current_user.role,
+                resource_type="TRIAGE_CASE",
+                resource_id=None,
+                fields_modified=None,
+                changeDetails={"limit": limit, "returned_count": len(cases_public)},
+                ip=audit_meta.get("ip"),
+            )
+        except Exception:
+            logger.exception("Failed to write audit log for listing triage cases")
+    
         logger.info(f"GET /triage-cases/ - returned {count} cases")
         return TriageCasesPublic(cases=cases_public, count=count)
     except HTTPException:
@@ -93,7 +114,8 @@ def get_cases_by_status(
     status: str,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    request: Request = None
 ) -> Any:
     logger.info(f"GET /triage-cases/status/{status} - limit: {limit}, user: {current_user.email}")
     
@@ -113,7 +135,24 @@ def get_cases_by_status(
         cases = db.exec(statement).all()
         
         cases_public = [build_case_public(case, db) for case in cases]
-
+    
+        # Log list access at collection level
+        try:
+            audit_meta = get_audit_meta(request) if request is not None else {"ip": None}
+            AuditService.create_log(
+                db,
+                action="LIST_CASES",
+                status="SUCCESS",
+                actor_id=current_user.userID,
+                actor_type=current_user.role,
+                resource_type="TRIAGE_CASE",
+                resource_id=None,
+                fields_modified=None,
+                changeDetails={"status_filter": status, "limit": limit, "returned_count": len(cases_public)},
+                ip=audit_meta.get("ip"),
+            )
+        except Exception:
+            logger.exception("Failed to write audit log for listing cases by status")
         return TriageCasesPublic(cases=cases_public, count=count)
     except HTTPException:
         raise
@@ -125,7 +164,8 @@ def get_cases_by_status(
 def get_specific_case(
     id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    request: Request = None
 ) -> Any:
     logger.info(f"GET /triage-cases/{id} - user: {current_user.email}")
     
@@ -134,7 +174,7 @@ def get_specific_case(
         if not case:
             logger.warning(f"GET /triage-cases/{id} - case not found")
             raise HTTPException(status_code=404, detail="Triage case not found")
-        
+
         return build_case_public(case, db)
     except HTTPException:
         raise
@@ -146,7 +186,8 @@ def get_specific_case(
 def create_new_case(
     new_case: TriageCaseCreate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    request: Request = None
 ) -> Any:
     logger.info(f"POST /triage-cases/ - user: {current_user.email}, body: {new_case.model_dump()}")
     
@@ -157,6 +198,24 @@ def create_new_case(
         db.commit()
         db.refresh(case)
         
+        # Log case creation
+        try:
+            from app.core.audit_middleware import get_audit_meta
+            audit_meta = get_audit_meta(request) if request is not None else {"ip": None}
+            fields_created = list(new_case.model_dump().keys())
+            AuditService.create_log(
+                db,
+                action="CREATE_CASE",
+                status="SUCCESS",
+                actor_id=current_user.userID,
+                actor_type=current_user.role,
+                resource_type="TRIAGE_CASE",
+                resource_id=case.caseID,
+                fields_modified=fields_created,
+                ip=audit_meta.get("ip"),
+            )
+        except Exception:
+            logger.exception("Failed to write audit log for case creation") 
         return build_case_public(case, db)
     except HTTPException:
         db.rollback()
@@ -171,7 +230,8 @@ def update_case(
     id: uuid.UUID,
     update: TriageCaseUpdate,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    request: Request = None
 ) -> Any:
     logger.info(f"PATCH /triage-cases/{id} - user: {current_user.email}, body: {update.model_dump(exclude_unset=True)}")
     
@@ -229,9 +289,27 @@ def update_case(
             
             case.sqlmodel_update(case_updates)
             db.add(case)
-        
+            
         db.commit()
         db.refresh(case)
+
+        if case_updates:
+            try:
+                audit_meta = get_audit_meta(request) if request is not None else {"ip": None}
+                modified_fields = list(case_updates.keys())
+                AuditService.create_log(
+                    db,
+                    action="UPDATE_CASE",
+                    status="SUCCESS",
+                    actor_id=current_user.userID,
+                    actor_type=current_user.role,
+                    resource_type="TRIAGE_CASE",
+                    resource_id=case.caseID,
+                    fields_modified=modified_fields,
+                    ip=audit_meta.get("ip"),
+                )
+            except Exception:
+                logger.exception("Failed to write audit log for case update")            
         
         return build_case_public(case, db)
     except HTTPException:
@@ -247,7 +325,8 @@ def update_case(
 def delete_case(
     id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    request: Request = None
 ) -> Message:
     logger.info(f"DELETE /triage-cases/{id} - user: {current_user.email}")
     
@@ -260,6 +339,23 @@ def delete_case(
         db.delete(case)
         db.commit()
         
+        # Log case deletion
+        try:
+            audit_meta = get_audit_meta(request) if request is not None else {"ip": None}
+            AuditService.create_log(
+                db,
+                action="DELETE_CASE",
+                status="SUCCESS",
+                actor_id=current_user.userID,
+                actor_type=current_user.role,
+                resource_type="TRIAGE_CASE",
+                resource_id=id,
+                fields_modified=None,
+                ip=audit_meta.get("ip"),
+            )
+        except Exception:
+            logger.exception("Failed to write audit log for case deletion")
+    
         logger.info(f"DELETE /triage-cases/{id} - deleted successfully")
         return Message(message="Triage case deleted successfully")
     except HTTPException:
@@ -276,7 +372,8 @@ def review_case(
     id: uuid.UUID,
     update: TriageCaseReview,
     db: Session = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    request: Request = None
 ) -> Any:
     logger.info(f"PATCH /triage-cases/{id}/review - user: {current_user.email}, body: {update.model_dump()}")
     
@@ -324,6 +421,26 @@ def review_case(
         db.commit()
         db.refresh(case)
         
+        # Log case review
+        try:
+            audit_meta = get_audit_meta(request) if request is not None else {"ip": None}
+            fields_modified = ["status", "reviewReason", "reviewedBy", "reviewTimestamp"]
+            if update.scheduledDate:
+                fields_modified.append("scheduledDate")
+            AuditService.create_log(
+                db,
+                action="REVIEW_CASE",
+                status="SUCCESS",
+                actor_id=current_user.userID,
+                actor_type=current_user.role,
+                resource_type="TRIAGE_CASE",
+                resource_id=case.caseID,
+                fields_modified=fields_modified,
+                ip=audit_meta.get("ip"),
+            )
+        except Exception:
+            logger.exception("Failed to write audit log for case review")
+    
         return build_case_public(case, db)
     except HTTPException:
         db.rollback()
