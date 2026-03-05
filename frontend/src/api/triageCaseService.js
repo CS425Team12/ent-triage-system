@@ -7,12 +7,12 @@ class TriageCaseService {
   }
 
   async getCaseById(id) {
-    const res = apiClient.get(`/triage-cases/${id}`);
+    const res = await apiClient.get(`/triage-cases/${id}`);
     return res.data;
   }
 
   async createCase(caseData) {
-    const res = apiClient.post('/triage-cases', caseData);
+    const res = await apiClient.post('/triage-cases', caseData);
     return res.data;
   }
 
