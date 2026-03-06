@@ -42,26 +42,34 @@ export default function AIReasoningField({ flags }) {
           </Typography>
         </Box>
       </AccordionSummary>
-      <AccordionDetails>
-        <Stack spacing={1} sx={{ margin: 0 }}>
-          {orderedTags.map((tag) => {
-            const keywords = groupFlags[tag];
-            if (!keywords) return null;
+      <AccordionDetails sx={{ paddingTop: 0 }}>
+        {flags && flags.length > 0 ? (
+          <Stack spacing={1}>
+            {orderedTags.map((tag) => {
+              const keywords = groupFlags[tag];
+              if (!keywords) return null;
 
-            return (
-              <Box key={tag}>
-                <Typography variant="caption" sx={{ fontWeight: 500, mb: 0.5 }}>
-                  {AI_REASONING_FLAG_LABELS[tag]}
-                </Typography>
-                <Box display="flex" flexWrap="wrap" gap={0.5}>
-                  {keywords.map((flag, i) => (
-                    <Chip key={i} label={flag.keyword} size="small" />
-                  ))}
+              return (
+                <Box key={tag}>
+                  <Typography
+                    variant="caption"
+                    sx={{ fontWeight: 500, mb: 0.5 }}>
+                    {AI_REASONING_FLAG_LABELS[tag]}
+                  </Typography>
+                  <Box display="flex" flexWrap="wrap" gap={0.5}>
+                    {keywords.map((flag, i) => (
+                      <Chip key={i} label={flag.keyword} size="small" />
+                    ))}
+                  </Box>
                 </Box>
-              </Box>
-            );
-          })}
-        </Stack>
+              );
+            })}
+          </Stack>
+        ) : (
+          <Typography variant="caption" color="textSecondary">
+            No AI reasoning information available at this time.
+          </Typography>
+        )}
       </AccordionDetails>
     </Accordion>
   );
