@@ -55,6 +55,14 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="/calendar"
+                element={
+                  <ProtectedRoute requireRoles={["physician", "staff"]}>
+                    <Calendar />
+                  </ProtectedRoute>
+                }
+              />
             </Routes>
           </Router>
         </LocalizationProvider>
