@@ -417,8 +417,6 @@ def review_case(
         try:
             audit_meta = get_audit_meta(request) if request is not None else {"ip": None}
             fields_modified = ["status", "reviewReason", "reviewedBy", "reviewTimestamp"]
-            if update.scheduledDate:
-                fields_modified.append("scheduledDate")
             AuditService.create_log(
                 db,
                 action="REVIEW_CASE",

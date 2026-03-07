@@ -427,6 +427,8 @@ def create_appointment(
         patient        = db.get(Patient, case.patientID) if case.patientID else None
         patient_name   = f"{patient.firstName} {patient.lastName}" if patient else "Patient"
         physician_name = f"Dr. {physician.firstName} {physician.lastName}"
+        gcal_calendar_id = physician.calendarID
+        color_id         = _color_id_for(physician.calendarColor or DEFAULT_CALENDAR_COLOR)
 
         payload.scheduledAt  = normalize_to_clinic_tz(payload.scheduledAt)
         payload.scheduledEnd = normalize_to_clinic_tz(payload.scheduledEnd)
@@ -464,8 +466,7 @@ def create_appointment(
         db.refresh(appointment)
 
         event_body = {
-            "summary":     f"{patient_name}",
-            "description": f"Physician: {physician_name} - Scheduled By: {current_user.firstName} {current_user.lastName} - Case ID: {payload.caseID}",
+            "summary":     f"Appointment: {patient_name}",
             "start": {
                 "dateTime": payload.scheduledAt.isoformat(),
                 "timeZone": "America/Los_Angeles",
@@ -475,14 +476,13 @@ def create_appointment(
                 "timeZone": "America/Los_Angeles",
             },
         }
-
-        color_id = _color_id_for(physician.calendarColor or DEFAULT_CALENDAR_COLOR)
         if color_id:
             event_body["colorId"] = color_id
 
+        logger.info(f"Creating Google Calendar event for appointment {appointment.appointmentID} with body: {event_body}")
         try:
             event = calendar_service.events().insert(
-                calendarId=physician.calendarID,
+                calendarId=gcal_calendar_id,
                 body=event_body,
             ).execute()
         except Exception as e:
@@ -490,7 +490,7 @@ def create_appointment(
             raise HTTPException(status_code=502, detail="Failed to create Google Calendar event")
 
         appointment.gcalEventId    = event["id"]
-        appointment.gcalCalendarId = physician.calendarID
+        appointment.gcalCalendarId = gcal_calendar_id
         db.add(appointment)
         db.commit()
 
@@ -511,11 +511,11 @@ def create_appointment(
             logger.exception("Failed to write audit log for create_appointment")
 
         return {
-            "appointmentID": str(appointment.appointmentID),
-            "gcalEventId":   event["id"],
-            "scheduledAt":   appointment.scheduledAt,
-            "scheduledEnd":  appointment.scheduledEnd,
-            "physicianName": physician_name,
+            "appointmentID":  str(appointment.appointmentID),
+            "gcalEventId":    event["id"],
+            "scheduledAt":    appointment.scheduledAt,
+            "scheduledEnd":   appointment.scheduledEnd,
+            "physicianName":  physician_name,
         }
 
     except HTTPException:
@@ -563,7 +563,8 @@ def reschedule_appointment(
         patient       = db.get(Patient, case.patientID) if case and case.patientID else None
         patient_name  = f"{patient.firstName} {patient.lastName}" if patient else "Patient"
         physician_name = f"Dr. {physician.firstName} {physician.lastName}"
-
+        gcal_calendar_id     = physician.calendarID
+        color_id             = _color_id_for(physician.calendarColor or DEFAULT_CALENDAR_COLOR)
         old_gcal_calendar_id = appointment.gcalCalendarId
         old_gcal_event_id    = appointment.gcalEventId
 
@@ -613,8 +614,7 @@ def reschedule_appointment(
             raise HTTPException(status_code=502, detail="Failed to delete old Google Calendar event")
 
         event_body = {
-            "summary":     f"{patient_name} (RESCHEDULED)",
-            "description": f"Physician: {physician_name} - Scheduled By: {current_user.firstName} {current_user.lastName} - Case ID: {payload.caseID}",
+            "summary":     f"Appointment: {patient_name} (RESCHEDULED)",
             "start": {
                 "dateTime": new_start.isoformat(),
                 "timeZone": "America/Los_Angeles",
@@ -624,14 +624,12 @@ def reschedule_appointment(
                 "timeZone": "America/Los_Angeles",
             },
         }
-
-        color_id = _color_id_for(physician.calendarColor or DEFAULT_CALENDAR_COLOR)
         if color_id:
             event_body["colorId"] = color_id
 
         try:
             event = calendar_service.events().insert(
-                calendarId=physician.calendarID,
+                calendarId=gcal_calendar_id,
                 body=event_body,
             ).execute()
         except Exception as e:
@@ -639,7 +637,7 @@ def reschedule_appointment(
             raise HTTPException(status_code=502, detail="Failed to create new Google Calendar event")
 
         new_appt.gcalEventId    = event["id"]
-        new_appt.gcalCalendarId = physician.calendarID
+        new_appt.gcalCalendarId = gcal_calendar_id
         db.add(new_appt)
         db.commit()
 
@@ -660,11 +658,11 @@ def reschedule_appointment(
             logger.exception("Failed to write audit log for reschedule_appointment")
 
         return {
-            "appointmentID": str(new_appt.appointmentID),
-            "gcalEventId":   event["id"],
-            "scheduledAt":   new_appt.scheduledAt,
-            "scheduledEnd":  new_appt.scheduledEnd,
-            "physicianName": physician_name,
+            "appointmentID":  str(new_appt.appointmentID),
+            "gcalEventId":    event["id"],
+            "scheduledAt":    new_appt.scheduledAt,
+            "scheduledEnd":   new_appt.scheduledEnd,
+            "physicianName":  physician_name,
         }
 
     except HTTPException:

@@ -19,7 +19,6 @@ import RenderSelectField from "../fields/RenderSelectField";
 import { USER_ROLE_OPTIONS } from "../../utils/consts";
 import { getChangedFields } from "../../utils/utils"
 import { useAuth } from "../../context/AuthContext";
-import { getChangedFields } from "../../utils/utils";
 import { CalendarColorPicker } from "../CalendarColorPicker";
 import { toast } from "../../utils/toast";
 import { calendarManagementService } from "../../api/calendarService";

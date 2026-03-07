@@ -12,63 +12,81 @@ import {
   Tooltip,
 } from "@mui/material";
 import { CalendarMonth } from "@mui/icons-material";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import listPlugin from "@fullcalendar/list";
 import { userService } from "../api/userService";
+import { calendarManagementService } from "../api/calendarService";
 import { toast } from "../utils/toast";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+import "./calendar.css";
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+
+const CLINIC_TZ = "America/Los_Angeles";
 
 const VIEW_MODES = [
-  { value: "WEEK", label: "Week" },
-  { value: "MONTH", label: "Month" },
-  { value: "AGENDA", label: "Agenda" },
+  { value: "WEEK", label: "Week", fcView: "timeGridWeek" },
+  { value: "MONTH", label: "Month", fcView: "dayGridMonth" },
+  { value: "AGENDA", label: "Agenda", fcView: "listWeek" },
 ];
 
-export default function CalendarPage() {
-  const [physicians, setPhysicians] = useState([]);
+export const Calendar = () => {
+  const [data, setData] = useState({ physicians: [], appointments: [] });
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState("WEEK");
   const [selectedPhysician, setSelectedPhysician] = useState(null);
 
   useEffect(() => {
-    fetchPhysicians();
+    fetchData();
   }, []);
 
-  const fetchPhysicians = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const results = await userService.getAllUsers();
-      const users = results.data;
-      const physicians = users.filter((u) => u.role === "physician");
-      setPhysicians(physicians);
-    } catch {
-      toast.error("Could not load physician calendars");
+      const [usersRes, apptRes] = await Promise.all([
+        userService.getAllUsers(),
+        calendarManagementService.getAppointments({ status: "scheduled" }),
+      ]);
+      setData({
+        physicians: usersRes.data.filter((u) => u.role === "physician"),
+        appointments: apptRes,
+      });
+    } catch(err) {
+      toast.error("Could not load calendar data");
+      console.error("Error fetching calendar data:", err);
     } finally {
       setLoading(false);
     }
   };
 
-  const embedUrl = useMemo(() => {
-    const withCal = physicians.filter((p) => p.calendarID);
-    if (!withCal.length) return null;
-
-    const toShow = selectedPhysician
-      ? withCal.filter((p) => p.userID === selectedPhysician)
-      : withCal;
-
-    const srcs = toShow
-      .map((p) => `src=${encodeURIComponent(p.calendarID)}`)
-      .join("&");
-
-    return (
-      `https://calendar.google.com/calendar/embed?${srcs}` +
-      `&ctz=America%2FLos_Angeles` +
-      `&mode=${viewMode}` +
-      `&showTitle=0` +
-      `&showNav=1` +
-      `&showDate=1` +
-      `&showPrint=0` +
-      `&showTabs=0` +
-      `&showCalendars=0`
+  const physicianColorMap = useMemo(() => {
+    return Object.fromEntries(
+      data.physicians.map((p) => [p.userID, p.calendarColor || "#0b8043"]),
     );
-  }, [physicians, viewMode, selectedPhysician]);
+  }, [data.physicians]);
+
+  const events = useMemo(() => {
+    const toShow = selectedPhysician
+      ? data.appointments.filter((a) => a.physicianID === selectedPhysician)
+      : data.appointments;
+
+    return toShow.map((a) => ({
+      id: a.appointmentID,
+      title: a.physicianName || "Appointment",
+      start: dayjs(a.scheduledAt).tz(CLINIC_TZ).format("YYYY-MM-DDTHH:mm:ss"),
+      end: dayjs(a.scheduledEnd).tz(CLINIC_TZ).format("YYYY-MM-DDTHH:mm:ss"),
+      backgroundColor: physicianColorMap[a.physicianID] || "#0b8043",
+      borderColor: physicianColorMap[a.physicianID] || "#0b8043",
+    }));
+  }, [data.appointments, selectedPhysician, physicianColorMap]);
+
+  const fcView =
+    VIEW_MODES.find((m) => m.value === viewMode)?.fcView || "timeGridWeek";
 
   return (
     <>
@@ -108,7 +126,7 @@ export default function CalendarPage() {
                     Schedule
                   </Typography>
                   <Stack direction="row" spacing={1} flexWrap="wrap">
-                    {physicians
+                    {data.physicians
                       .filter((p) => p.calendarID)
                       .map((p) => (
                         <Tooltip
@@ -183,7 +201,7 @@ export default function CalendarPage() {
                 </Stack>
               </Box>
               <Box sx={{ height: "76vh", p: 2 }}>
-                {loading && (
+                {loading ? (
                   <Box
                     sx={{
                       display: "flex",
@@ -194,18 +212,22 @@ export default function CalendarPage() {
                   >
                     <CircularProgress />
                   </Box>
-                )}
-                {!loading && embedUrl && (
-                  <iframe
-                    src={embedUrl}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      border: "none",
-                      display: "block",
-                      borderRadius: 8,
+                ) : (
+                  <FullCalendar
+                    plugins={[dayGridPlugin, timeGridPlugin, listPlugin]}
+                    key={fcView}
+                    initialView={fcView}
+                    events={events}
+                    height="100%"
+                    headerToolbar={{
+                      left: "prev,next today",
+                      center: "title",
+                      right: "",
                     }}
-                    title="Clinic Schedule"
+                    slotMinTime="08:00:00"
+                    slotMaxTime="17:00:00"
+                    nowIndicator
+                    eventTextColor="#ffffff"
                   />
                 )}
               </Box>
@@ -215,4 +237,4 @@ export default function CalendarPage() {
       </Box>
     </>
   );
-}
+};

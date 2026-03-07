@@ -15,7 +15,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import { ToastContainer } from "react-toastify";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import Calendar from "./pages/Calendar.jsx";
+import { Calendar } from "./pages/Calendar.jsx";
 
 function App() {
   return (
