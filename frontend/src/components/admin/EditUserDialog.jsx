@@ -17,6 +17,7 @@ import RenderTextField from "../fields/RenderTextField";
 import RenderSelectField from "../fields/RenderSelectField";
 import { USER_ROLE_OPTIONS } from "../../utils/consts";
 import { getChangedFields } from "../../utils/utils"
+import { useAuth } from "../../context/AuthContext";
 
 export default function EditUserDialog({
   open,
@@ -26,6 +27,8 @@ export default function EditUserDialog({
 }) {
   const [editMode, setEditMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const { user } = useAuth();
+  const isCurrentUser = user?.userID === userData?.userID;
 
   const formik = useFormik({
     enableReinitialize: true,
@@ -118,7 +121,7 @@ export default function EditUserDialog({
               formik={formik}
               fieldName="role"
               options={USER_ROLE_OPTIONS}
-              overrides={{ onChange: handleRoleChange }}
+              overrides={{ onChange: handleRoleChange, disabled: isCurrentUser }}
             />
           </Grid>
           <Grid size={12}>
@@ -132,7 +135,7 @@ export default function EditUserDialog({
                   onChange={(e) =>
                     formik.setFieldValue("isAdmin", e.target.checked)
                   }
-                  disabled={!editMode || formik.values.role === "admin"}
+                  disabled={!editMode || formik.values.role === "admin" || isCurrentUser}
                 />
               }
             />

@@ -133,7 +133,7 @@ def update_user(user_id: str, payload: UserUpdate, db: Session = Depends(get_db)
 	if not user:
 		raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-	if payload.role.lower() == "admin" and not payload.isAdmin:
+	if payload.role and payload.role.lower() == "admin" and not payload.isAdmin:
 		raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Users with role 'admin' must have admin permissions enabled")
 	
 	modified_fields = []
