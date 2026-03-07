@@ -184,17 +184,17 @@ def attach_physician_calendar(
     try:
         physician = db.get(User, physician_id)
         if not physician:
-            raise HTTPException(status_code=404, detail="Physician not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Physician not found")
         if physician.role != "physician":
-            raise HTTPException(status_code=400, detail="User is not a physician")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User is not a physician")
         if physician.calendarID:
             raise HTTPException(
-                status_code=409, detail="Physician already has a calendar"
+                status_code=status.HTTP_409_CONFLICT, detail="Physician already has a calendar"
             )
 
         if not payload.color.startswith("#") or len(payload.color) != 7:
             raise HTTPException(
-                status_code=422, detail="Color must be a valid hex value e.g. #0B8043"
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Color must be a valid hex value e.g. #0B8043"
             )
 
         try:
@@ -206,8 +206,8 @@ def attach_physician_calendar(
                 f"POST /calendar/physicians/{physician_id}/attach - calendarList insert error: {str(e)}"
             )
             raise HTTPException(
-                status_code=502,
-                detail="Could not access the specified calendar — ensure it is shared with the service account",
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Could not access the specified calendar",
             )
 
         try:
@@ -263,7 +263,7 @@ def attach_physician_calendar(
             f"POST /calendar/physicians/{physician_id}/attach - Error: {str(e)}"
         )
         raise HTTPException(
-            status_code=500, detail="Failed to attach physician calendar"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to attach physician calendar"
         )
 
 
@@ -287,15 +287,15 @@ def update_calendar_color(
     try:
         physician = db.get(User, physician_id)
         if not physician:
-            raise HTTPException(status_code=404, detail="Physician not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Physician not found")
         if not physician.calendarID:
             raise HTTPException(
-                status_code=400, detail="Physician has no calendar — create one first"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Physician has no calendar — create one first"
             )
 
         if not payload.color.startswith("#") or len(payload.color) != 7:
             raise HTTPException(
-                status_code=422, detail="Color must be a valid hex value e.g. #0B8043"
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Color must be a valid hex value e.g. #0B8043"
             )
 
         calendar_service.calendarList().patch(
@@ -343,7 +343,7 @@ def update_calendar_color(
         logger.exception(
             f"PATCH /calendar/physicians/{physician_id}/color - Error: {str(e)}"
         )
-        raise HTTPException(status_code=500, detail="Failed to update calendar color")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update calendar color")
 
 
 @router.get("/availability")
@@ -363,11 +363,11 @@ def get_availability(
             logger.warning(
                 f"GET /appointments/availability - physician not found: {physicianID}"
             )
-            raise HTTPException(status_code=404, detail="Physician not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Physician not found")
 
         if not physician.calendarID:
             raise HTTPException(
-                status_code=400, detail="Physician has no calendar configured"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Physician has no calendar configured"
             )
 
         time_min = (
@@ -406,7 +406,7 @@ def get_availability(
         raise
     except Exception as e:
         logger.exception(f"GET /appointments/availability - Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to fetch availability")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to fetch availability")
 
 
 @router.get("/")
@@ -453,7 +453,7 @@ def list_appointments(
         raise
     except Exception as e:
         logger.exception(f"GET /appointments - Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve appointments")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to retrieve appointments")
 
 
 @router.get("/{appointment_id}")
@@ -468,7 +468,7 @@ def get_appointment(
         appointment = db.get(Appointment, appointment_id)
         if not appointment:
             logger.warning(f"GET /appointments/{appointment_id} - not found")
-            raise HTTPException(status_code=404, detail="Appointment not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Appointment not found")
 
         physician = db.get(User, appointment.physicianID)
 
@@ -483,10 +483,10 @@ def get_appointment(
         raise
     except Exception as e:
         logger.exception(f"GET /appointments/{appointment_id} - Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to retrieve appointment")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to retrieve appointment")
 
 
-@router.post("/", status_code=201)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def create_appointment(
     payload: AppointmentCreate,
     db: Session = Depends(get_db),
@@ -503,18 +503,18 @@ def create_appointment(
             logger.warning(
                 f"POST /appointments - physician not found: {payload.physicianID}"
             )
-            raise HTTPException(status_code=404, detail="Physician not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Physician not found")
 
         if not physician.calendarID:
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Physician has no calendar configured — run the setup script",
             )
 
         case = db.get(TriageCase, payload.caseID)
         if not case:
             logger.warning(f"POST /appointments - case not found: {payload.caseID}")
-            raise HTTPException(status_code=404, detail="TriageCase not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="TriageCase not found")
 
         patient = db.get(Patient, case.patientID) if case.patientID else None
         patient_name = (
@@ -576,7 +576,7 @@ def create_appointment(
             event_body["colorId"] = color_id
 
         logger.info(
-            f"Creating Google Calendar event for appointment {appointment.appointmentID} with body: {event_body}"
+            f"Creating calendar event for appointment {appointment.appointmentID} with body: {event_body}"
         )
         try:
             event = (
@@ -588,9 +588,9 @@ def create_appointment(
                 .execute()
             )
         except Exception as e:
-            logger.exception(f"POST /appointments - Google Calendar error: {str(e)}")
+            logger.exception(f"POST /appointments - calendar error: {str(e)}")
             raise HTTPException(
-                status_code=502, detail="Failed to create Google Calendar event"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create calendar event"
             )
 
         appointment.gcalEventId = event["id"]
@@ -635,7 +635,7 @@ def create_appointment(
     except Exception as e:
         db.rollback()
         logger.exception(f"POST /appointments - Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to create appointment")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create appointment")
 
 
 @router.patch("/{appointment_id}")
@@ -654,19 +654,19 @@ def reschedule_appointment(
         appointment = db.get(Appointment, appointment_id)
         if not appointment:
             logger.warning(f"PATCH /appointments/{appointment_id} - not found")
-            raise HTTPException(status_code=404, detail="Appointment not found")
-
-        if appointment.status in ("cancelled", "rescheduled"):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Appointment not found")
+        
+        current_date = normalize_to_clinic_tz(datetime.now(timezone.utc))
+        if appointment.scheduledAt < current_date or appointment.status in ("cancelled", "rescheduled"):
             raise HTTPException(
-                status_code=400,
-                detail=f"Cannot reschedule a {appointment.status} appointment",
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot reschedule appointment"
             )
 
         physician_id = payload.physicianID or appointment.physicianID
         physician = db.get(User, physician_id)
         if not physician or not physician.calendarID:
             raise HTTPException(
-                status_code=404,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail="Physician not found or has no calendar configured",
             )
 
@@ -731,10 +731,10 @@ def reschedule_appointment(
             ).execute()
         except Exception as e:
             logger.exception(
-                f"PATCH /appointments/{appointment_id} - Google Calendar delete error: {str(e)}"
+                f"PATCH /appointments/{appointment_id} - calendar delete error: {str(e)}"
             )
             raise HTTPException(
-                status_code=502, detail="Failed to delete old Google Calendar event"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete old calendar event"
             )
 
         event_body = {
@@ -762,10 +762,10 @@ def reschedule_appointment(
             )
         except Exception as e:
             logger.exception(
-                f"PATCH /appointments/{appointment_id} - Google Calendar insert error: {str(e)}"
+                f"PATCH /appointments/{appointment_id} - calendar insert error: {str(e)}"
             )
             raise HTTPException(
-                status_code=502, detail="Failed to create new Google Calendar event"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create new calendar event"
             )
 
         new_appt.gcalEventId = event["id"]
@@ -805,7 +805,7 @@ def reschedule_appointment(
     except Exception as e:
         db.rollback()
         logger.exception(f"PATCH /appointments/{appointment_id} - Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to reschedule appointment")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to reschedule appointment")
 
 
 @router.delete("/{appointment_id}")
@@ -822,11 +822,12 @@ def cancel_appointment(
         appointment = db.get(Appointment, appointment_id)
         if not appointment:
             logger.warning(f"DELETE /appointments/{appointment_id} - not found")
-            raise HTTPException(status_code=404, detail="Appointment not found")
-
-        if appointment.status == "cancelled":
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Appointment not found")
+        
+        current_date = normalize_to_clinic_tz(datetime.now(timezone.utc))
+        if appointment.scheduledAt < current_date or appointment.status == "cancelled":
             raise HTTPException(
-                status_code=400, detail="Appointment is already cancelled"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot reschedule appointment"
             )
 
         old_gcal_calendar_id = appointment.gcalCalendarId
@@ -861,10 +862,10 @@ def cancel_appointment(
             ).execute()
         except Exception as e:
             logger.exception(
-                f"DELETE /appointments/{appointment_id} - Google Calendar error: {str(e)}"
+                f"DELETE /appointments/{appointment_id} - calendar error: {str(e)}"
             )
             raise HTTPException(
-                status_code=502, detail="Failed to delete Google Calendar event"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete calendar event"
             )
 
         try:
@@ -893,7 +894,7 @@ def cancel_appointment(
     except Exception as e:
         db.rollback()
         logger.exception(f"DELETE /appointments/{appointment_id} - Error: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to cancel appointment")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to cancel appointment")
 
 
 def _build_slots(date: str, busy_blocks: list) -> list:
