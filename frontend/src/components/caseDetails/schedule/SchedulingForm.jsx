@@ -1,7 +1,7 @@
 import { Box, Typography, Chip } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { PhysicianSelect } from "./PhysicianSelect";
-import { DURATIONS } from "../../utils/consts";
+import { DURATIONS } from "../../../utils/consts";
 
 export const SchedulingForm = ({
   physicians,

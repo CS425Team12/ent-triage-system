@@ -4,7 +4,7 @@ import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import dayjs from "dayjs";
-import { DURATIONS } from "./SchedulingForm";
+import { DURATIONS } from "../../../utils/consts";
 
 const SELECTED_COLOR = primary.main;
 const AVAILABLE_COLOR = secondary.main;
