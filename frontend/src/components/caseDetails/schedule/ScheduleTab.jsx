@@ -305,9 +305,6 @@ export const ScheduleTab = ({
   };
 
   const selectedPhysician = physicians.find((p) => p.userID === physicianID);
-  const submitIcon = submitting ? (
-    <CircularProgress size={16} color="inherit" />
-  ) : null;
 
   const schedulingFormProps = {
     physicians,
@@ -388,7 +385,6 @@ export const ScheduleTab = ({
             variant="contained"
             disabled={submitting}
             onClick={handleSubmitReview}
-            startIcon={submitIcon}
           >
             {scheduleAppt && physicianID && appointmentDate && appointmentTime
               ? "Submit Review & Schedule"
@@ -421,7 +417,7 @@ export const ScheduleTab = ({
                 <Switch
                   checked={showRescheduleForm}
                   onChange={handleToggleReschedule}
-                  disabled={showCancelForm}
+                  disabled={showCancelForm || submitting}
                 />
               }
               label={<Typography variant="body2">Reschedule</Typography>}
@@ -434,7 +430,7 @@ export const ScheduleTab = ({
                     setShowCancelForm(e.target.checked);
                     setShowRescheduleForm(false);
                   }}
-                  disabled={showRescheduleForm}
+                  disabled={showRescheduleForm || submitting}
                 />
               }
               label={
@@ -492,7 +488,6 @@ export const ScheduleTab = ({
               variant="contained"
               disabled={submitting}
               onClick={handleSubmitCancel}
-              startIcon={submitIcon}
             >
               Cancel Appointment
             </Button>
@@ -502,7 +497,6 @@ export const ScheduleTab = ({
               variant="contained"
               disabled={submitting}
               onClick={handleSubmitReschedule}
-              startIcon={submitIcon}
             >
               Reschedule Appointment
             </Button>
@@ -551,7 +545,6 @@ export const ScheduleTab = ({
           variant="contained"
           disabled={submitting}
           onClick={handleSubmitSchedule}
-          startIcon={submitIcon}
         >
           Schedule Appointment
         </Button>
