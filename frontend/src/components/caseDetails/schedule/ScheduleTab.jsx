@@ -49,7 +49,7 @@ export const ScheduleTab = ({
   const isAppointmentInPast =
     hasAppointment && dayjs(appointment.scheduledAt).isBefore(dayjs());
 
-  const fetchUsers = async () => {
+  const fetchPhysicians = async () => {
     try {
       const results = await userService.getAllUsers();
       setPhysicians(results.data.filter((u) => u.role === "physician") || []);
@@ -75,11 +75,19 @@ export const ScheduleTab = ({
   };
 
   React.useEffect(() => {
-    fetchUsers();
+    fetchPhysicians();
+
+    return () => {
+      setPhysicians([]);
+    };
   }, []);
 
   React.useEffect(() => {
     fetchAppointment();
+
+    return () => {
+      setAppointment(null);
+    };
   }, [activeAppointmentID]);
 
   const schema = React.useMemo(
@@ -504,6 +512,20 @@ export const ScheduleTab = ({
           </Button>
         </Box>
       </Box>
+    );
+  }
+
+  if (loadingAppointment) {
+    return (
+      <Grid
+        container
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight={400}
+      >
+        <CircularProgress />
+      </Grid>
     );
   }
 
