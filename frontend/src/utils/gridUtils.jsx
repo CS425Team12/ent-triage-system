@@ -7,8 +7,6 @@ import theme, { URGENCY_COLORS } from "../theme";
 import { CaseDetailsDialog } from "../components/caseDetails/CaseDetailsDialog";
 import EditUserDialog from "../components/admin/EditUserDialog";
 import { userService } from "../api/userService";
-import { triageCaseService } from "../api/triageCaseService";
-import { patientService } from "../api/patientService";
 import { toast } from "../utils/toast";
 import { UrgencyChangeIndicator } from "../components/UrgencyChangeIndicator";
 
@@ -44,66 +42,6 @@ export const EditCaseButtonCellRenderer = (params) => {
     setOpen(false);
   };
 
-  const handleSave = async (updatedData) => {
-    if (Object.keys(updatedData).length === 0) return;
-    const isReviewing = Boolean(updatedData.reviewReason);
-
-    try {
-      if (isReviewing) {
-        // review case (no patient updates during review)
-        await triageCaseService.reviewCase(caseData.caseID, {
-          reviewReason: updatedData.reviewReason,
-          scheduledDate: updatedData.scheduledDate || null,
-        });
-        toast.success("Successfully reviewed case");
-      } else {
-        // regular update - split patient and case fields
-        const patientFields = [
-          "firstName",
-          "lastName",
-          "DOB",
-          "contactInfo",
-          "insuranceInfo",
-          "returningPatient",
-        ];
-        const caseFields = [
-          "overrideUrgency",
-          "overrideSummary",
-          "clinicianNotes",
-          "scheduledDate",
-        ];
-
-        const patientUpdates = {};
-        const caseUpdates = {};
-
-        Object.keys(updatedData).forEach((key) => {
-          if (patientFields.includes(key)) {
-            patientUpdates[key] = updatedData[key];
-          } else if (caseFields.includes(key)) {
-            caseUpdates[key] = updatedData[key];
-          }
-        });
-
-        // update patient if there are patient changes
-        if (Object.keys(patientUpdates).length > 0) {
-          await patientService.updatePatient(caseData.patientID, patientUpdates);
-        }
-
-        // update case if there are case changes
-        if (Object.keys(caseUpdates).length > 0) {
-          await triageCaseService.updateCase(caseData.caseID, caseUpdates);
-        }
-
-        toast.success("Successfully updated case");
-      }
-      params.onCaseUpdated?.(); // refresh grid after update
-      handleClose();
-    } catch (err) {
-      toast.error("Failed to update case.");
-      console.error("Failed to update case", err);
-    }
-  };
-
   return (
     <>
       <IconButton onClick={handleOpen} size="medium" aria-label="Edit case">
@@ -113,7 +51,7 @@ export const EditCaseButtonCellRenderer = (params) => {
         open={open}
         onClose={handleClose}
         caseData={caseData}
-        onSave={handleSave}
+        onUpdated={params.onCaseUpdated}
       />
     </>
   );

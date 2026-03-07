@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import { useAuth } from "../../context/AuthContext";
 import {
   Dialog,
   DialogTitle,
@@ -19,6 +18,9 @@ import { CaseHistory } from "./CaseHistory";
 import { ScheduleTab } from "./schedule/ScheduleTab";
 import { STATUS_VALUES } from "../../utils/consts";
 import { getChangedFields } from "../../utils/utils";
+import { triageCaseService } from "../../api/triageCaseService";
+import { patientService } from "../../api/patientService";
+import { toast } from "../../utils/toast";
 
 function TabPanel({ children, value, index }) {
   return (
@@ -28,11 +30,71 @@ function TabPanel({ children, value, index }) {
   );
 }
 
-export const CaseDetailsDialog = ({ open, onClose, caseData, onSave }) => {
+export const CaseDetailsDialog = ({ open, onClose, caseData, onUpdated }) => {
   const [formData, setFormData] = useState({});
   const [editMode, setEditMode] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+
+    const handleSave = async (updatedData) => {
+    if (Object.keys(updatedData).length === 0) return;
+    const isReviewing = Boolean(updatedData.reviewReason);
+
+    try {
+      if (isReviewing) {
+        // review case (no patient updates during review)
+        await triageCaseService.reviewCase(caseData.caseID, {
+          reviewReason: updatedData.reviewReason,
+          scheduledDate: updatedData.scheduledDate || null,
+        });
+        toast.success("Successfully reviewed case");
+      } else {
+        // regular update - split patient and case fields
+        const patientFields = [
+          "firstName",
+          "lastName",
+          "DOB",
+          "contactInfo",
+          "insuranceInfo",
+          "returningPatient",
+        ];
+        const caseFields = [
+          "overrideUrgency",
+          "overrideSummary",
+          "clinicianNotes",
+          "scheduledDate",
+        ];
+
+        const patientUpdates = {};
+        const caseUpdates = {};
+
+        Object.keys(updatedData).forEach((key) => {
+          if (patientFields.includes(key)) {
+            patientUpdates[key] = updatedData[key];
+          } else if (caseFields.includes(key)) {
+            caseUpdates[key] = updatedData[key];
+          }
+        });
+
+        // update patient if there are patient changes
+        if (Object.keys(patientUpdates).length > 0) {
+          await patientService.updatePatient(caseData.patientID, patientUpdates);
+        }
+
+        // update case if there are case changes
+        if (Object.keys(caseUpdates).length > 0) {
+          await triageCaseService.updateCase(caseData.caseID, caseUpdates);
+        }
+
+        toast.success("Successfully updated case");
+      }
+      onUpdated(); // refresh grid after update
+      handleClose();
+    } catch (err) {
+      toast.error("Failed to update case.");
+      console.error("Failed to update case", err);
+    }
+  };
 
   useEffect(() => {
     if (caseData) {
@@ -81,7 +143,7 @@ export const CaseDetailsDialog = ({ open, onClose, caseData, onSave }) => {
     onSubmit: async (values) => {
       const changedValues = getChangedFields(formik.initialValues, values);
       setSubmitting(true);
-      await onSave(changedValues);
+      await handleSave(changedValues);
       setSubmitting(false);
       setEditMode(false);
     },
@@ -144,8 +206,9 @@ export const CaseDetailsDialog = ({ open, onClose, caseData, onSave }) => {
             caseStatus={formData?.status}
             scheduledDate={formData.scheduledDate}
             activeAppointmentID={formData.activeAppointmentID}
-            onSave={onSave}
+            onSave={handleSave}
             handleClose={handleClose}
+            onUpdated={onUpdated}
           />
         </TabPanel>
       </DialogContent>

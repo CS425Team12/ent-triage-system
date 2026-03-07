@@ -26,6 +26,7 @@ export const ScheduleTab = ({
   activeAppointmentID,
   onSave,
   handleClose,
+  onUpdated,
 }) => {
   const [physicians, setPhysicians] = React.useState([]);
   const [appointment, setAppointment] = React.useState(null);
@@ -254,6 +255,7 @@ export const ScheduleTab = ({
         scheduledEnd,
       });
       toast.success("Appointment scheduled");
+      onUpdated(); // refresh appointment info after scheduling
       handleClose();
     } catch (err) {
       toast.error("Failed to schedule appointment");
@@ -277,6 +279,7 @@ export const ScheduleTab = ({
         },
       );
       toast.success("Appointment rescheduled");
+      onUpdated(); // refresh appointment info after reschedule
       handleClose();
     } catch (err) {
       toast.error("Failed to reschedule appointment");
@@ -295,6 +298,7 @@ export const ScheduleTab = ({
         cancelReason,
       );
       toast.success("Appointment cancelled");
+      onUpdated(); // refresh appointment info after cancellation
       handleClose();
     } catch (err) {
       toast.error("Failed to cancel appointment");
