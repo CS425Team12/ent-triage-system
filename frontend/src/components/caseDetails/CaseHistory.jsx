@@ -16,6 +16,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Divider,
   Grid,
 } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
@@ -45,7 +46,7 @@ const HISTORY_VIEWS = {
   PATIENT: "patient",
 };
 
-export const CaseHistory = ({ caseId, patientId }) => {
+export const CaseHistory = ({ caseId, patientId, handleClose }) => {
   const [historyView, setHistoryView] = useState(HISTORY_VIEWS.COMBINED);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -252,7 +253,8 @@ export const CaseHistory = ({ caseId, patientId }) => {
         display="flex"
         justifyContent="center"
         alignItems="center"
-        minHeight={400}>
+        minHeight={400}
+      >
         <CircularProgress />
       </Grid>
     );
@@ -264,7 +266,8 @@ export const CaseHistory = ({ caseId, patientId }) => {
         <Stack
           direction="row"
           justifyContent="space-between"
-          alignItems="center">
+          alignItems="center"
+        >
           <Typography variant="h8" sx={{ fontWeight: 600 }}>
             Change History
           </Typography>
@@ -304,7 +307,8 @@ export const CaseHistory = ({ caseId, patientId }) => {
           direction="row"
           spacing={2}
           alignItems="center"
-          justifyContent="flex-end">
+          justifyContent="flex-end"
+        >
           <Autocomplete
             multiple
             size="small"
@@ -343,7 +347,8 @@ export const CaseHistory = ({ caseId, patientId }) => {
             value={historyView}
             exclusive
             onChange={handleHistoryViewChange}
-            size="small">
+            size="small"
+          >
             <ToggleButton value={HISTORY_VIEWS.COMBINED}>
               All Changes
             </ToggleButton>
@@ -365,7 +370,8 @@ export const CaseHistory = ({ caseId, patientId }) => {
           justifyContent="center"
           alignItems="center"
           minHeight={200}
-          py={4}>
+          py={4}
+        >
           <Typography color="text.secondary">
             No change history available
           </Typography>
@@ -383,7 +389,8 @@ export const CaseHistory = ({ caseId, patientId }) => {
                 <TimelineItem key={groupIndex}>
                   <TimelineOppositeContent
                     color="text.secondary"
-                    sx={{ flex: 0.15, minWidth: 100 }}>
+                    sx={{ flex: 0.15, minWidth: 100 }}
+                  >
                     <Typography variant="caption" fontWeight={600}>
                       {periodTime.format("MMM D, YYYY")}
                     </Typography>
@@ -404,7 +411,8 @@ export const CaseHistory = ({ caseId, patientId }) => {
                           direction="row"
                           spacing={1}
                           alignItems="center"
-                          justifyContent="space-between">
+                          justifyContent="space-between"
+                        >
                           <Typography variant="body2" color="text.secondary">
                             {hasMultipleChanges ? (
                               <>
@@ -420,7 +428,8 @@ export const CaseHistory = ({ caseId, patientId }) => {
                           <Stack
                             direction="row"
                             spacing={0.5}
-                            alignItems="center">
+                            alignItems="center"
+                          >
                             {group.changes
                               .map((c) => c.entityType)
                               .filter((v, i, a) => a.indexOf(v) === i)
@@ -443,7 +452,8 @@ export const CaseHistory = ({ caseId, patientId }) => {
                                   <Typography
                                     variant="caption"
                                     fontWeight={600}
-                                    color="text.secondary">
+                                    color="text.secondary"
+                                  >
                                     {change.changedByEmail}
                                   </Typography>
                                 )}
@@ -454,7 +464,8 @@ export const CaseHistory = ({ caseId, patientId }) => {
                                   direction="row"
                                   spacing={1}
                                   alignItems="center"
-                                  flexWrap="wrap">
+                                  flexWrap="wrap"
+                                >
                                   <Chip
                                     label={getDisplayValue(
                                       change.fieldName,
@@ -469,7 +480,8 @@ export const CaseHistory = ({ caseId, patientId }) => {
                                   />
                                   <Typography
                                     variant="body2"
-                                    color="text.secondary">
+                                    color="text.secondary"
+                                  >
                                     →
                                   </Typography>
                                   <Chip
@@ -502,7 +514,8 @@ export const CaseHistory = ({ caseId, patientId }) => {
             container
             spacing={2}
             justifyContent="flex-end"
-            alignItems="center">
+            alignItems="center"
+          >
             <Grid item>
               <Typography variant="body2" color="text.secondary">
                 Showing {(page - 1) * itemsPerPage + 1}-
@@ -516,7 +529,8 @@ export const CaseHistory = ({ caseId, patientId }) => {
                 <Select
                   value={itemsPerPage}
                   label="Per Page"
-                  onChange={handleItemsPerPageChange}>
+                  onChange={handleItemsPerPageChange}
+                >
                   <MenuItem value={5}>5</MenuItem>
                   <MenuItem value={10}>10</MenuItem>
                   <MenuItem value={20}>20</MenuItem>
@@ -537,6 +551,12 @@ export const CaseHistory = ({ caseId, patientId }) => {
           </Grid>
         </>
       )}
+      <Grid item size={12}>
+        <Divider />
+      </Grid>
+      <Grid item display="flex" justifyContent="flex-end">
+        <Button onClick={handleClose}>Close</Button>
+      </Grid>
     </Grid>
   );
 };

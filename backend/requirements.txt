@@ -13,3 +13,4 @@ pydantic-settings
 redis
 google-api-python-client
 google-auth
+resend

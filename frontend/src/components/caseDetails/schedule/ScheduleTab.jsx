@@ -19,12 +19,12 @@ import { STATUS_VALUES } from "../../../utils/consts";
 import { SchedulingForm } from "./SchedulingForm";
 import { AvailabilityCalendar, addMinutes } from "./AvailabilityCalendar";
 import { AppointmentInfo } from "./AppointmentInfo";
+import { triageCaseService } from "../../../api/triageCaseService";
 
 export const ScheduleTab = ({
   caseID,
   caseStatus,
   activeAppointmentID,
-  onSave,
   handleClose,
   onUpdated,
 }) => {
@@ -219,21 +219,35 @@ export const ScheduleTab = ({
     cancelReason,
   };
 
+  const handleCreateAppointment = async () => {
+    try {
+      const { scheduledAt, scheduledEnd } = buildTimes();
+      await calendarManagementService.createAppointment({
+        caseID,
+        physicianID,
+        scheduledAt,
+        scheduledEnd,
+      });
+    } catch (err) {
+      toast.error("Failed to create appointment in calendar");
+      console.error("Error creating appointment in calendar", err);
+    }
+  };
+
   const handleSubmitReview = async () => {
     const valid = await validate(currentValues);
     if (!valid) return;
     setSubmitting(true);
     try {
       if (scheduleAppt && physicianID && appointmentDate && appointmentTime) {
-        const { scheduledAt, scheduledEnd } = buildTimes();
-        await calendarManagementService.createAppointment({
-          caseID,
-          physicianID,
-          scheduledAt,
-          scheduledEnd,
-        });
+        await handleCreateAppointment();
       }
-      await onSave({ reviewReason, caseID });
+
+      await triageCaseService.reviewCase(caseID, {
+        reviewReason: currentValues.reviewReason,
+      });
+      toast.success("Successfully reviewed case");
+      onUpdated();
       handleClose();
     } catch (err) {
       toast.error("Failed to submit review");

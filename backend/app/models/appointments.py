@@ -10,9 +10,9 @@ class Appointment(SQLModel, table=True):
   __table_args__ = {"schema": "ent"}
 
   appointmentID: str = Field(default_factory=lambda: str(uuid4()), primary_key=True)
-  caseID: str = Field(foreign_key="ent.TriageCase.caseID")
-  physicianID: str = Field(foreign_key="ent.User.userID")
-  scheduledBy: str = Field(foreign_key="ent.User.userID")
+  caseID: uuid.UUID = Field(foreign_key="ent.TriageCase.caseID")
+  physicianID: uuid.UUID = Field(foreign_key="ent.User.userID")
+  scheduledBy: uuid.UUID = Field(foreign_key="ent.User.userID")
 
   scheduledAt: datetime
   scheduledEnd: datetime

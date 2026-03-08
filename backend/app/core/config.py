@@ -16,6 +16,16 @@ class Settings(BaseSettings):
     DB_HOST: str
     DB_PORT: str = "5432"
     DB_NAME: str
+
+    EMAIL_TOKEN_SECRET: str = "email-token-secret"
+    FORGOT_PASSWORD_TOKEN_EXPIRE_HOURS: int = 2
+    REGISTER_TOKEN_EXPIRE_HOURS: int = 48
+    SET_PASSWORD_URL: str
+    
+    RESEND_API_KEY: str
+    TEST_EMAIL_RECIPIENT: str
+    EMAIL_SENDER: str
+    
     
     GCAL_CLIENT_EMAIL: str
     GCAL_PRIVATE_KEY: str

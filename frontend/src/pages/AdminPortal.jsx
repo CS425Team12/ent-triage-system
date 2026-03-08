@@ -39,12 +39,21 @@ export default function AdminPortal() {
     } catch (err) {
       if (err.response?.status === 409) {
         toast.error(
-          `Failed to create user: User with this email already exists.`
+          `Failed to create user: User with this email already exists.`,
         );
       } else {
         toast.error(`Failed to create user, please try again.`);
       }
     }
+  };
+
+  const gridOptions = {
+    getRowStyle: (params) => {
+      if (!params.data.isActive) {
+        return { color: "grey", opacity: 0.6 };
+      }
+      return null;
+    },
   };
 
   return (
@@ -60,7 +69,8 @@ export default function AdminPortal() {
                 borderColor: "divider",
                 borderRadius: 2,
                 overflow: "hidden",
-              }}>
+              }}
+            >
               <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Box
@@ -72,20 +82,23 @@ export default function AdminPortal() {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                    }}>
+                    }}
+                  >
                     <SupervisorAccount sx={{ fontSize: 24, color: "white" }} />
                   </Box>
                   <Typography
                     variant="h5"
                     color="text.primary"
-                    sx={{ fontWeight: 600, flexGrow: 1 }}>
+                    sx={{ fontWeight: 600, flexGrow: 1 }}
+                  >
                     Admin
                   </Typography>
                   <Button
                     variant="contained"
                     color="primary"
                     disableElevation
-                    onClick={() => setCreateUserOpen(true)}>
+                    onClick={() => setCreateUserOpen(true)}
+                  >
                     Create User
                   </Button>
                 </Stack>
@@ -95,6 +108,7 @@ export default function AdminPortal() {
                   loading={loading}
                   rowData={users}
                   columnDefs={userColumnDefs(fetchUsers)}
+                  gridOptions={gridOptions}
                 />
               </Box>
             </Paper>

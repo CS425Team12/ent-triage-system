@@ -5,16 +5,20 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Depends, status, Request
 from sqlmodel import Session, select
 
+from app.core.config import settings
 from app.core.dependencies import get_db
 from app.auth.dependencies import get_current_user
 from app.models.models import User, UserPublic, UserCreate, UserUpdate, UsersList
 from app.core.audit import AuditService
 from app.core.audit_middleware import get_audit_meta
+from app.core.security import EmailTokenType
+from app.auth.helpers.mailer import send_token_email
 
 logger = logging.getLogger(__name__)
 
-
 router = APIRouter(prefix="/users", tags=["users"])
+
+SET_PASSWORD_URL = str(settings.SET_PASSWORD_URL) 
 
 
 @router.get("/", response_model=UsersList)
@@ -97,10 +101,18 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db), current_user
 		role=payload.role.lower(),
 		isAdmin=payload.isAdmin,
 		passwordHash="",
+		isActive=False
 	)
 	db.add(new_user)
 	db.commit()
 	db.refresh(new_user)
+	send_token_email(
+			user_email=new_user.email,
+			user_id=str(new_user.userID),
+			token_type=EmailTokenType.REGISTER,
+			template_name="create-password",
+			base_url=str(settings.SET_PASSWORD_URL)
+	)
 	
 	# Log user creation
 	try:

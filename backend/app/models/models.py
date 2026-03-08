@@ -32,6 +32,7 @@ class UserPublic(SQLModel):
     isAdmin: bool = False
     calendarID: Optional[str] = None
     calendarColor: Optional[str] = None
+    isActive: bool = Field(default=False)
 
 class UsersList(SQLModel):
     data: list[UserPublic]
@@ -51,6 +52,7 @@ class User(SQLModel, table=True):
     isAdmin: bool = False
     calendarID: Optional[str] = None
     calendarColor: Optional[str] = None
+    isActive: bool = Field(default=False)
 
 class Message(SQLModel):
     message: str

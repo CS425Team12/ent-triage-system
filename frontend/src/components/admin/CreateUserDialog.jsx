@@ -55,7 +55,7 @@ export default function CreateUserDialog({ open, onClose, onSave }) {
     onClose();
   };
 
-    const handleRoleChange = (e) => {
+  const handleRoleChange = (e) => {
     formik.setFieldValue("role", e.target.value);
     if (e.target.value === "admin") {
       formik.setFieldValue("isAdmin", true);
@@ -75,12 +75,14 @@ export default function CreateUserDialog({ open, onClose, onSave }) {
             formik={formik}
             fieldName="firstName"
             label="First Name *"
+            overrides={{ disabled: submitting }}
           />
           <RenderTextField
             editMode={true}
             formik={formik}
             fieldName="lastName"
             label="Last Name *"
+            overrides={{ disabled: submitting }}
           />
           <RenderTextField
             editMode={true}
@@ -88,6 +90,7 @@ export default function CreateUserDialog({ open, onClose, onSave }) {
             fieldName="email"
             label="Email *"
             type="email"
+            overrides={{ disabled: submitting }}
           />
           <RenderSelectField
             editMode={true}
@@ -95,7 +98,7 @@ export default function CreateUserDialog({ open, onClose, onSave }) {
             fieldName="role"
             label="Role *"
             options={USER_ROLE_OPTIONS}
-            overrides={{ onChange: handleRoleChange }}
+            overrides={{ onChange: handleRoleChange, disabled: submitting }}
           />
           <Grid size={12}>
             <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
@@ -108,7 +111,7 @@ export default function CreateUserDialog({ open, onClose, onSave }) {
                   onChange={(e) =>
                     formik.setFieldValue("isAdmin", e.target.checked)
                   }
-                  disabled={formik.values.role === "admin"}
+                  disabled={formik.values.role === "admin" || submitting}
                 />
               }
             />

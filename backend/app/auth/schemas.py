@@ -20,5 +20,9 @@ class UserResponse(SQLModel):
     first_initial: str
     isAdmin: bool = False
 
+class ForgotPasswordRequest(SQLModel):
+    email: str
 
-    
+class SetPasswordRequest(SQLModel):
+    token: str
+    new_password: str
