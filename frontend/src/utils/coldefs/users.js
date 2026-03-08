@@ -14,7 +14,7 @@ export const userColumnDefs = (onUserUpdated) => [
     filter: 'agTextColumnFilter',
     valueGetter: (params) => {
       return concatNameValueGetter(params.data.firstName, params.data.lastName);
-    }
+    },
   },
   {
     headerName: 'Email',

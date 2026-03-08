@@ -7,9 +7,9 @@ logger = logging.getLogger(__name__)
 
 resend.api_key = str(settings.RESEND_API_KEY)
 TEST_EMAIL_RECIPIENT = str(settings.TEST_EMAIL_RECIPIENT) # without our own domain, we can only send it to our registered email and from test email for now
-TEST_EMAIL_SENDER = str(settings.TEST_EMAIL_SENDER) 
+EMAIL_SENDER = str(settings.EMAIL_SENDER) 
 
-def send_template_email(from_email: str = TEST_EMAIL_SENDER, to_email: str = TEST_EMAIL_RECIPIENT, template_name: str = "", link: str = "") -> bool:
+def send_template_email(from_email: str = EMAIL_SENDER, to_email: str = TEST_EMAIL_RECIPIENT, template_name: str = "", link: str = "") -> bool:
     try:
       params: resend.Emails.SendParams = {
           "from": from_email,

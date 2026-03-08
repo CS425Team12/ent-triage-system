@@ -132,6 +132,7 @@ export default function EditUserDialog({
               formik={formik}
               fieldName="email"
               type="email"
+              props={{ disabled: !user.isActive }}
             />
           </Grid>
           <Grid item size={12}>

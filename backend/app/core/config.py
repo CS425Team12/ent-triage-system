@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     
     RESEND_API_KEY: str
     TEST_EMAIL_RECIPIENT: str
-    TEST_EMAIL_SENDER: str
+    EMAIL_SENDER: str
     
     
     GCAL_CLIENT_EMAIL: str
