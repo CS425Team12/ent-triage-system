@@ -24,7 +24,6 @@ export const ScheduleTab = ({
   caseID,
   caseStatus,
   activeAppointmentID,
-  onSave,
   handleClose,
   onUpdated,
 }) => {
@@ -233,7 +232,13 @@ export const ScheduleTab = ({
           scheduledEnd,
         });
       }
-      await onSave({ reviewReason, caseID });
+
+      await triageCaseService.reviewCase(caseData.caseID, {
+        reviewReason: updatedData.reviewReason,
+        scheduledDate: updatedData.scheduledDate || null,
+      });
+      toast.success("Successfully reviewed case");
+
       handleClose();
     } catch (err) {
       toast.error("Failed to submit review");
