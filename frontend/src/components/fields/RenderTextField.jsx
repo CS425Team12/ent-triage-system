@@ -7,7 +7,7 @@ export default function RenderTextField({
   fieldName,
   label,
   type = "text",
-  props = {},
+  overrides = {},
 }) {
   const isDateTimeField = type === "datetime-local";
 
@@ -44,7 +44,7 @@ export default function RenderTextField({
       error={formik.touched[fieldName] && Boolean(formik.errors[fieldName])}
       helperText={formik.touched[fieldName] && formik.errors[fieldName]}
       multiline={isMultiline}
-      {...props}
+      {...overrides}
     />
   );
 }

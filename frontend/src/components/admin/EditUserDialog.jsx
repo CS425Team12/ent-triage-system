@@ -12,7 +12,8 @@ import {
   Divider,
   Switch,
   FormControlLabel,
-  Box
+  Box,
+  Stack,
 } from "@mui/material";
 import RenderTextField from "../fields/RenderTextField";
 import RenderSelectField from "../fields/RenderSelectField";
@@ -91,7 +92,9 @@ export default function EditUserDialog({
       toast.success("Calendar created successfully.");
     } catch (error) {
       toast.error("Failed to create calendar. Please try again.");
-      console.error("Failed to create calendar: " + (error.message || "Unknown error"));
+      console.error(
+        "Failed to create calendar: " + (error.message || "Unknown error"),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -111,6 +114,7 @@ export default function EditUserDialog({
               editMode={editMode}
               formik={formik}
               fieldName="firstName"
+              overrides={{ disabled: submitting }}
             />
           </Grid>
           <Grid item size={6}>
@@ -121,18 +125,31 @@ export default function EditUserDialog({
               editMode={editMode}
               formik={formik}
               fieldName="lastName"
+              overrides={{ disabled: submitting }}
             />
           </Grid>
           <Grid item size={12}>
-            <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-              Email
-            </Typography>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                Email
+              </Typography>
+              {!userData.isActive && editMode && (
+                <Typography
+                  variant="subtitle2"
+                  color="textSecondary"
+                  sx={{ fontWeight: 500 }}
+                  gutterBottom
+                >
+                  User has not activated their account yet.
+                </Typography>
+              )}
+            </Stack>
             <RenderTextField
               editMode={editMode}
               formik={formik}
               fieldName="email"
               type="email"
-              props={{ disabled: !user.isActive }}
+              overrides={{ disabled: !userData.isActive || submitting }}
             />
           </Grid>
           <Grid item size={12}>
@@ -146,7 +163,7 @@ export default function EditUserDialog({
               options={USER_ROLE_OPTIONS}
               overrides={{
                 onChange: handleRoleChange,
-                disabled: isCurrentUser,
+                disabled: isCurrentUser || submitting,
               }}
             />
           </Grid>
@@ -162,7 +179,10 @@ export default function EditUserDialog({
                     formik.setFieldValue("isAdmin", e.target.checked)
                   }
                   disabled={
-                    !editMode || formik.values.role === "admin" || isCurrentUser
+                    !editMode ||
+                    formik.values.role === "admin" ||
+                    isCurrentUser ||
+                    submitting
                   }
                 />
               }

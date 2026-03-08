@@ -74,7 +74,7 @@ export default function SetPassword() {
                 </Typography>
 
                 <Typography variant="body2">
-                  Your account is now ready. You can log in using your new
+                  Your account is now ready. You can log in using your email and new
                   password.
                 </Typography>
 
