@@ -19,6 +19,7 @@ import { STATUS_VALUES } from "../../../utils/consts";
 import { SchedulingForm } from "./SchedulingForm";
 import { AvailabilityCalendar, addMinutes } from "./AvailabilityCalendar";
 import { AppointmentInfo } from "./AppointmentInfo";
+import { triageCaseService } from "../../../api/triageCaseService";
 
 export const ScheduleTab = ({
   caseID,
@@ -233,12 +234,10 @@ export const ScheduleTab = ({
         });
       }
 
-      await triageCaseService.reviewCase(caseData.caseID, {
-        reviewReason: updatedData.reviewReason,
-        scheduledDate: updatedData.scheduledDate || null,
+      await triageCaseService.reviewCase(caseID, {
+        reviewReason: currentValues.reviewReason,
       });
       toast.success("Successfully reviewed case");
-
       handleClose();
     } catch (err) {
       toast.error("Failed to submit review");
